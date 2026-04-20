@@ -1,0 +1,5 @@
+FROM registry.librechat.ai/danny-avila/librechat-dev:latest
+USER root
+RUN apk add --no-cache python3 python3-dev py3-pip gcc musl-dev gettext && \
+    pip3 install mcp-clickhouse --break-system-packages
+USER node

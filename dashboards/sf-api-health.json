@@ -1,0 +1,294 @@
+{
+  "dashboard": {
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, event_type, count() as calls\nFROM (\n  SELECT timestamp, 'REST' as event_type FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'SOAP' as event_type FROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v1' as event_type FROM salesforceProd.bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v2' as event_type FROM salesforceProd.bulk_api2_events WHERE $__timeFilter(timestamp)\n)\nGROUP BY t, event_type ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "API Call Volume by Type",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 2,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  countIf(status_code >= 400) as errors,\n  countIf(status_code < 400) as success\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "REST API Error Rate",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
+        "id": 3,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT user_agent, count() as calls, countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY user_agent ORDER BY calls DESC LIMIT 20",
+            "refId": "A"
+          }
+        ],
+        "title": "Top REST API Callers",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        },
+        "id": 4,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT timestamp, user_name, operation, object_type, rows_processed, status\nFROM salesforceProd.bulk_api_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC LIMIT 50",
+            "refId": "A"
+          }
+        ],
+        "title": "Bulk Job Activity",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        },
+        "id": 5,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT toString(status_code) as status, count() as calls\nFROM salesforceProd.apex_callout_events\nWHERE $__timeFilter(timestamp)\nGROUP BY status ORDER BY calls DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "Apex Callout Status Codes",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 40
+        },
+        "id": 6,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT named_credential_id, method, count() as calls,\n  countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.named_credential_events\nWHERE $__timeFilter(timestamp)\nGROUP BY named_credential_id, method ORDER BY calls DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "Named Credential Usage",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 48
+        },
+        "id": 7,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT uri, method, count() as calls,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri, method ORDER BY p95_ms DESC LIMIT 20",
+            "refId": "A"
+          }
+        ],
+        "title": "Slowest REST Endpoints",
+        "type": "table"
+      }
+    ],
+    "refresh": "1h",
+    "tags": [
+      "salesforce",
+      "api"
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "timezone": "browser",
+    "title": "Salesforce - API & Integration Health",
+    "uid": "sf-api-health",
+    "version": 0
+  },
+  "folderId": 0,
+  "overwrite": true
+}

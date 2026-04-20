@@ -1,0 +1,16 @@
+version: 1.1.5
+
+mcpServers:
+  clickhouse:
+    command: python3
+    args:
+      - "-m"
+      - "mcp_clickhouse.main"
+    env:
+      CLICKHOUSE_HOST: "your-instance.us-east-1.aws.clickhouse.cloud"
+      CLICKHOUSE_PORT: "8443"
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: "yourpassword"
+      CLICKHOUSE_SECURE: "true"
+      CLICKHOUSE_DATABASE: "salesforceProd"
+      LD_PRELOAD: "/usr/lib/libintl.so.8"

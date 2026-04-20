@@ -1,0 +1,7 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml

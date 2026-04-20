@@ -1,0 +1,294 @@
+{
+  "dashboard": {
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as exceptions FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "Apex Exceptions Over Time",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 2,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT exception_type, class_name, method_name, count() as occurrences, max(timestamp) as last_seen FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY exception_type, class_name, method_name ORDER BY occurrences DESC LIMIT 20",
+            "refId": "A"
+          }
+        ],
+        "title": "Top Exception Types",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
+        "id": 3,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, operation, count() as deploys FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) GROUP BY t, operation ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "Deployments Over Time",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        },
+        "id": 4,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT timestamp, user_name, operation, entity_type, entity_name, round(run_time_ns/1000000, 0) as duration_ms FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 50",
+            "refId": "A"
+          }
+        ],
+        "title": "Recent Deployments",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        },
+        "id": 5,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT flow_name, count() as executions, round(avg(run_time_ns)/1000000, 1) as avg_ms, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, sum(interview_limit_hit) as limit_hits FROM salesforceProd.flow_execution_events WHERE $__timeFilter(timestamp) GROUP BY flow_name ORDER BY avg_ms DESC LIMIT 20",
+            "refId": "A"
+          }
+        ],
+        "title": "Flow Execution Performance",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 40
+        },
+        "id": 6,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "Page Load Performance (p95 vs avg)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 48
+        },
+        "id": 7,
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT uri, count() as hits, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY uri ORDER BY p95_ms DESC LIMIT 20",
+            "refId": "A"
+          }
+        ],
+        "title": "Slowest Pages (p95)",
+        "type": "table"
+      }
+    ],
+    "refresh": "1h",
+    "tags": [
+      "salesforce",
+      "ops"
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "timezone": "browser",
+    "title": "Salesforce - Operational Health",
+    "uid": "sf-ops-health",
+    "version": 0
+  },
+  "folderId": 0,
+  "overwrite": true
+}

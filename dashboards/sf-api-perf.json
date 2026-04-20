@@ -1,0 +1,587 @@
+{
+  "dashboard": {
+    "panels": [
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "displayLabels": [
+            "name",
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "pieType": "donut"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT api_family, sum(calls) as calls FROM (\n  SELECT 'REST' as api_family, count() as calls FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'SOAP', count() FROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM salesforceProd.bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM salesforceProd.bulk_api2_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'ApexREST', count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY api_family ORDER BY calls DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "API Family",
+        "type": "piechart"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "displayLabels": [
+            "name",
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "pieType": "donut"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT method, count() as calls FROM (\n  SELECT method FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT method FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY method ORDER BY calls DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "HTTP Method",
+        "type": "piechart"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 0
+        },
+        "id": 3,
+        "options": {
+          "displayLabels": [
+            "name",
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "pieType": "donut"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT uri, count() as calls FROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY calls DESC LIMIT 10",
+            "refId": "A"
+          }
+        ],
+        "title": "API Resource",
+        "type": "piechart"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              }
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 4,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fillOpacity": 80,
+          "gradientMode": "none",
+          "groupWidth": 0.7,
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "horizontal",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 100
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT user_agent as client, count() as calls\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND user_agent != ''\nGROUP BY client ORDER BY calls DESC LIMIT 15",
+            "refId": "A"
+          }
+        ],
+        "title": "API Calls Per Client",
+        "type": "barchart"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 18
+        },
+        "id": 5,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t, 'REST' as family, count() as failed\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nGROUP BY t, family\nUNION ALL\nSELECT toStartOfHour(timestamp), 'SOAP', count()\nFROM salesforceProd.api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t, family\nORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "Failed API Calls Per Hour by API Family",
+        "type": "timeseries"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "timestamp"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 200
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "status_code"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 100
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 400
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 26
+        },
+        "id": 6,
+        "options": {
+          "footer": {
+            "countRows": false,
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": [
+            {
+              "desc": true,
+              "displayName": "timestamp"
+            }
+          ]
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "table",
+            "rawSql": "SELECT timestamp, user_agent as client_name, 'REST' as api_family, method as http_method, uri as api_resource, status_code\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nORDER BY timestamp DESC LIMIT 50",
+            "refId": "A"
+          }
+        ],
+        "title": "Recent Failed API Calls",
+        "type": "table"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "request_count"
+              },
+              "properties": [
+                {
+                  "id": "custom.axisPlacement",
+                  "value": "right"
+                },
+                {
+                  "id": "custom.axisLabel",
+                  "value": "Request Count"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "avg_cpu_ms"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Avg CPU ms"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "avg_run_ms"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Avg Run ms"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "request_count"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Request Count"
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 36
+        },
+        "id": 7,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.14.1",
+            "queryType": "timeseries",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  round(avg(cpu_time_ns)/1000000, 2) as avg_cpu_ms,\n  round(avg(run_time_ns)/1000000, 2) as avg_run_ms,\n  count() as request_count\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
+            "refId": "A"
+          }
+        ],
+        "title": "REST API Performance",
+        "type": "timeseries"
+      }
+    ],
+    "refresh": "1h",
+    "schemaVersion": 38,
+    "tags": [
+      "salesforce",
+      "api"
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "timezone": "browser",
+    "title": "Salesforce - API Performance",
+    "uid": "sf-api-perf",
+    "version": 0
+  },
+  "folderId": 0,
+  "overwrite": true
+}
