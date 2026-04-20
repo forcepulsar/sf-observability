@@ -1,0 +1,2348 @@
+{
+  "id": null,
+  "uid": "sf-perf-health",
+  "title": "Salesforce Performance & Health",
+  "tags": [
+    "salesforce",
+    "performance"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "type": "row",
+      "id": 100,
+      "title": "Top Performance Issues",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "table",
+      "id": 1,
+      "title": "Top 5 Slowest Pages",
+      "description": "Average effective page load time per page URL (last period)",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Avg Load Time (ms)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Load Time (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  page_url AS \"Page URL\",\n  count() AS \"Loads\",\n  round(avg(effective_page_time_ms)) AS \"Avg Load Time (ms)\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY page_url\nORDER BY \"Avg Load Time (ms)\" DESC\nLIMIT 5",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 2,
+      "title": "Top 5 Slowest Apex Classes",
+      "description": "Average run time per Apex entry point",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Avg Run Time (ms)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 15000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Run Time (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  entry_point AS \"Entry Point\",\n  count() AS \"Executions\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\n  AND entry_point != ''\nGROUP BY entry_point\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 3,
+      "title": "Top 5 Slowest REST API Resources",
+      "description": "Average run time per REST API resource",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Avg Run Time (ms)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2000
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Run Time (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  uri AS \"URI\",\n  count() AS \"Calls\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\nGROUP BY uri\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 101,
+      "title": "Org Health",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      }
+    },
+    {
+      "type": "stat",
+      "id": 10,
+      "title": "Failed Logins",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND login_status != 'LOGIN_NO_ERROR'",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 11,
+      "title": "Total Logins",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.login_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 12,
+      "title": "Failed API Calls",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) AND status_code >= 400",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 13,
+      "title": "Total API Calls",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 14,
+      "title": "Failed Apex Callouts",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp) AND status_code >= 400",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 15,
+      "title": "Total Apex Callouts",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 16,
+      "title": "Apex Errors",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 17,
+      "title": "Total Apex Executions",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.apex_execution_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 18,
+      "title": "Flow Errors",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT sum(error_count) FROM salesforceProd.flow_nav_metric_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 19,
+      "title": "Total Flow Executions",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.flow_nav_metric_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 20,
+      "title": "Slow Pages (>10s)",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 10000",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 21,
+      "title": "Total Page Loads",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 14
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT count() FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp)",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 102,
+      "title": "Lightning Performance",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 30,
+      "title": "Page Load Time \u2014 Avg & P95",
+      "description": "Average and 95th percentile effective page load time over time",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(effective_page_time_ms)) AS \"Avg\",\n  round(quantile(0.95)(effective_page_time_ms)) AS \"P95\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 31,
+      "title": "Page Loads Over Time",
+      "description": "Total page loads and pages exceeding 10s threshold",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Total Loads\",\n  countIf(effective_page_time_ms > 10000) AS \"Slow (>10s)\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "id": 32,
+      "title": "Page Loads by App",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 27
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT app_name AS \"App\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND app_name != ''\nGROUP BY app_name\nORDER BY \"Loads\" DESC\nLIMIT 10",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "id": 33,
+      "title": "Page Loads by Browser",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 27
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT browser_name AS \"Browser\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND browser_name != ''\nGROUP BY browser_name\nORDER BY \"Loads\" DESC",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "id": 34,
+      "title": "Page Loads by Device",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 27
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT device_platform AS \"Device\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND device_platform != ''\nGROUP BY device_platform\nORDER BY \"Loads\" DESC",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 103,
+      "title": "Apex Performance",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 40,
+      "title": "Apex Executions & Errors Over Time",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+          "format": 0
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Errors\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 41,
+      "title": "Apex Run Time \u2014 Avg & P95",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(run_time_ns)) AS \"Avg\",\n  round(quantile(0.95)(run_time_ns)) AS \"P95\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp) AND run_time_ns > 0\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 42,
+      "title": "Apex Error Detail",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  timestamp AS \"Time\",\n  user_name AS \"User\",\n  class_name AS \"Class\",\n  method_name AS \"Method\",\n  exception_type AS \"Exception\",\n  exception_message AS \"Message\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 104,
+      "title": "API Performance",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 50,
+      "title": "API Calls Over Time by Family",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 53
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  api_family AS \"API Family\",\n  count() AS \"Calls\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_family != ''\nGROUP BY time, api_family\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 51,
+      "title": "API Error Rate Over Time",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 53
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(countIf(status_code >= 400) / count(), 4) AS \"Error Rate\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 52,
+      "title": "API Usage by Client",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Calls",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  client_name AS \"Client\",\n  count() AS \"Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND client_name != ''\nGROUP BY client_name\nORDER BY \"Calls\" DESC\nLIMIT 20",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 53,
+      "title": "Top API Resources by Error Count",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 61
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Errors",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error %"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  api_resource AS \"Resource\",\n  count() AS \"Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_resource != ''\nGROUP BY api_resource\nORDER BY \"Errors\" DESC\nLIMIT 20",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 105,
+      "title": "Flow Performance",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 69
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 60,
+      "title": "Flow Executions & Errors Over Time",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 70
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\",\n  sum(error_count) AS \"Errors\"\nFROM salesforceProd.flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 61,
+      "title": "Top 5 Slowest Flows",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Avg Execution Time (ms)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 15000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg Execution Time (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT\n  flow_version_id AS \"Flow Version\",\n  count() AS \"Runs\",\n  sum(error_count) AS \"Errors\",\n  round(avg(total_execution_time_ms)) AS \"Avg Execution Time (ms)\"\nFROM salesforceProd.flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY flow_version_id\nORDER BY \"Avg Execution Time (ms)\" DESC\nLIMIT 5",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 106,
+      "title": "Apex Exception Analysis",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 78
+      }
+    },
+    {
+      "type": "piechart",
+      "id": 70,
+      "title": "Exceptions by Category",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 79
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "pieType": "pie",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS \"Category\", count() AS \"Count\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY \"Category\" ORDER BY \"Count\" DESC",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 71,
+      "title": "Exception Categories Over Time",
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 79
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS category, count() AS cnt FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time, category ORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 72,
+      "title": "Slow Executions with Exceptions (REQUEST_ID join)",
+      "description": "Apex executions cross-joined with exceptions via REQUEST_ID + day",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 87
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Run Time (ms)",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Run Time (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT e.timestamp AS \"Time\", e.user_name AS \"User\", e.entry_point AS \"Entry Point\", e.run_time_ns AS \"Run Time (ms)\", ex.exception_type AS \"Exception Type\", left(ex.exception_message, 120) AS \"Message\" FROM salesforceProd.apex_execution_events e INNER JOIN salesforceProd.apex_exception_events ex ON e.request_id = ex.request_id AND toDate(e.timestamp) = toDate(ex.timestamp) WHERE $__timeFilter(e.timestamp) ORDER BY e.run_time_ns DESC LIMIT 50",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 107,
+      "title": "Business Impact",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 95
+      }
+    },
+    {
+      "type": "stat",
+      "id": 73,
+      "title": "Hours of Excess Page Load Time (>3s threshold)",
+      "description": "Total time users spent waiting beyond the 3s acceptable threshold",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 96
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / 1000.0 / 3600.0, 1) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 74,
+      "title": "Distinct Users Hit by Slow Pages (>3s)",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 96
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT uniq(user_id) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 75,
+      "title": "Avg Excess Wait per Affected User",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 96
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 15000
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / uniq(user_id)) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "id": 76,
+      "title": "Contention Leaders \u2014 Limit Violation Breakdown",
+      "description": "8 Salesforce governor limit violation types. High counts indicate org stress.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 100
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 5
+                    },
+                    {
+                      "color": "red",
+                      "value": 20
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', NULL) AS \"Contention Type\", count() AS \"Count\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) AND \"Contention Type\" IS NOT NULL GROUP BY \"Contention Type\" ORDER BY \"Count\" DESC",
+          "format": 1
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 77,
+      "title": "Contention Score Over Time",
+      "description": "Sum of all governor limit violations per time period \u2014 rising trend = org under stress",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 100
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, countIf(exception_message LIKE '%CPU time limit%' OR exception_message LIKE '%Too many DML statements%' OR exception_message LIKE '%Too many query rows%' OR exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%Too many SOQL queries%' OR exception_message LIKE '%CalloutException%' OR exception_message LIKE '%heap size%' OR exception_message LIKE '%LimitException%') AS \"Contention Score\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 108,
+      "title": "30-Day Baselines & Anomaly Detection",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 108
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 78,
+      "title": "Page Load Time vs 30-Day Baseline",
+      "description": "Current avg page load vs the 30-day rolling average. Divergence signals regression.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 109
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "30-day Avg"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(effective_page_time_ms)) AS \"Current Avg\", (SELECT round(avg(effective_page_time_ms)) FROM salesforceProd.lightning_page_view_events WHERE timestamp >= now() - INTERVAL 30 DAY AND effective_page_time_ms > 0) AS \"30-day Avg\" FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 0 GROUP BY time ORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 79,
+      "title": "Apex Run Time vs 30-Day Baseline",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 109
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "30-day Avg"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(run_time_ns)) AS \"Current Avg\", (SELECT round(avg(run_time_ns)) FROM salesforceProd.apex_execution_events WHERE timestamp >= now() - INTERVAL 30 DAY AND run_time_ns > 0) AS \"30-day Avg\" FROM salesforceProd.apex_execution_events WHERE $__timeFilter(timestamp) AND run_time_ns > 0 GROUP BY time ORDER BY time",
+          "format": 0
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 80,
+      "title": "API Error Rate vs 30-Day Baseline",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 117
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "30-day Avg"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(countIf(status_code >= 400) / count(), 4) AS \"Current Error Rate\", (SELECT round(countIf(status_code >= 400) / count(), 4) FROM salesforceProd.api_total_usage_events WHERE timestamp >= now() - INTERVAL 30 DAY) AS \"30-day Avg\" FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
+          "format": 0
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
+}

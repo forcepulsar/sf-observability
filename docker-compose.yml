@@ -92,7 +92,7 @@ services:
       - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
     volumes:
       - ./dashboards/provisioning:/etc/grafana/provisioning
-      - ./dashboards:/var/lib/grafana/dashboards
+      - ./dashboards/raw:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana
     restart: unless-stopped
     networks: [sf-obs]
