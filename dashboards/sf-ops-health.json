@@ -150,7 +150,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT timestamp, user_name, operation, entity_type, entity_name, round(run_time_ns/1000000, 0) as duration_ms FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 50",
+            "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name, operation, entity_type, entity_name, round(run_time_ns/1000000, 0) as duration_ms FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 50",
             "refId": "A"
           }
         ],

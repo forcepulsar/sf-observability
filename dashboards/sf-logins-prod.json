@@ -206,7 +206,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT\n      user_name,\n      login_status,\n      count() AS attempts\n  FROM salesforceProd.login_events\n  WHERE login_status != 'LOGIN_NO_ERROR'\n    AND $__timeFilter(timestamp)\n  GROUP BY user_name, login_status\n  ORDER BY attempts DESC\n  LIMIT 20",
+            "rawSql": "SELECT\n      dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name,\n      login_status,\n      count() AS attempts\n  FROM salesforceProd.login_events\n  WHERE login_status != 'LOGIN_NO_ERROR'\n    AND $__timeFilter(timestamp)\n  GROUP BY user_name, login_status\n  ORDER BY attempts DESC\n  LIMIT 20",
             "refId": "A"
           }
         ],

@@ -143,7 +143,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT delegated_user_name, user_name as impersonated_by, count() as times, max(timestamp) as last_seen\nFROM salesforceProd.login_as_events\nWHERE $__timeFilter(timestamp)\nGROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
+            "rawSql": "SELECT dictGetOrDefault('salesforceProd.user_lookup', 'username', delegated_user_id, delegated_user_name) AS delegated_user_name, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS impersonated_by, count() as times, max(timestamp) as last_seen\nFROM salesforceProd.login_as_events\nWHERE $__timeFilter(timestamp)\nGROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
             "refId": "A"
           }
         ],

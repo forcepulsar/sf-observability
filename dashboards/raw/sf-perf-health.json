@@ -1318,7 +1318,7 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "cfgz0zrjwhudcc"
           },
-          "rawSql": "SELECT\n  timestamp AS \"Time\",\n  user_name AS \"User\",\n  class_name AS \"Class\",\n  method_name AS \"Method\",\n  exception_type AS \"Exception\",\n  exception_message AS \"Message\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
+          "rawSql": "SELECT\n  timestamp AS \"Time\",\n  dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS \"User\",\n  class_name AS \"Class\",\n  method_name AS \"Method\",\n  exception_type AS \"Exception\",\n  exception_message AS \"Message\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
           "format": 1
         }
       ]
@@ -1789,7 +1789,7 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "cfgz0zrjwhudcc"
           },
-          "rawSql": "SELECT e.timestamp AS \"Time\", e.user_name AS \"User\", e.entry_point AS \"Entry Point\", e.run_time_ns AS \"Run Time (ms)\", ex.exception_type AS \"Exception Type\", left(ex.exception_message, 120) AS \"Message\" FROM salesforceProd.apex_execution_events e INNER JOIN salesforceProd.apex_exception_events ex ON e.request_id = ex.request_id AND toDate(e.timestamp) = toDate(ex.timestamp) WHERE $__timeFilter(e.timestamp) ORDER BY e.run_time_ns DESC LIMIT 50",
+          "rawSql": "SELECT e.timestamp AS \"Time\", dictGetOrDefault('salesforceProd.user_lookup', 'username', e.user_id, e.user_name) AS \"User\", e.entry_point AS \"Entry Point\", e.run_time_ns AS \"Run Time (ms)\", ex.exception_type AS \"Exception Type\", left(ex.exception_message, 120) AS \"Message\" FROM salesforceProd.apex_execution_events e INNER JOIN salesforceProd.apex_exception_events ex ON e.request_id = ex.request_id AND toDate(e.timestamp) = toDate(ex.timestamp) WHERE $__timeFilter(e.timestamp) ORDER BY e.run_time_ns DESC LIMIT 50",
           "format": 1
         }
       ]

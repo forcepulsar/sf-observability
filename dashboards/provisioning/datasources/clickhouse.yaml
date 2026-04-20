@@ -9,8 +9,8 @@ datasources:
     jsonData:
       defaultDatabase: ${CLICKHOUSE_DATABASE}
       host: ${CLICKHOUSE_HOST}
-      port: 9440
-      protocol: native
+      port: 8443
+      protocol: http
       secure: true
       username: ${CLICKHOUSE_USER}
     secureJsonData:

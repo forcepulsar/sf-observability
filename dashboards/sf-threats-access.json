@@ -1671,7 +1671,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT timestamp, user_name as username, user_id as user_identifier, login_status, browser_type, client_ip, login_type FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND ('${full_name}'='All' OR user_name='${full_name}') AND ('${user_id}'='All' OR user_id='${user_id}') ORDER BY timestamp DESC LIMIT 50",
+            "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS username, user_id as user_identifier, login_status, browser_type, client_ip, login_type FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND ('${full_name}'='All' OR user_name='${full_name}') AND ('${user_id}'='All' OR user_id='${user_id}') ORDER BY timestamp DESC LIMIT 50",
             "refId": "A"
           }
         ],
@@ -1732,7 +1732,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT delegated_user_name as impersonated_user, user_name as impersonated_by, count() as times, max(timestamp) as last_seen FROM salesforceProd.login_as_events WHERE $__timeFilter(timestamp) GROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
+            "rawSql": "SELECT dictGetOrDefault('salesforceProd.user_lookup', 'username', delegated_user_id, delegated_user_name) AS impersonated_user, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS impersonated_by, count() as times, max(timestamp) as last_seen FROM salesforceProd.login_as_events WHERE $__timeFilter(timestamp) GROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
             "refId": "A"
           }
         ],
@@ -2227,7 +2227,7 @@
           "multi": false,
           "name": "full_name",
           "options": [],
-          "query": "SELECT DISTINCT user_name FROM salesforceProd.login_events WHERE user_name != '' ORDER BY user_name LIMIT 500",
+          "query": "SELECT DISTINCT username FROM salesforceProd.users WHERE username != '' AND is_active = 1 ORDER BY username LIMIT 500",
           "refresh": 2,
           "regex": "",
           "sort": 1,

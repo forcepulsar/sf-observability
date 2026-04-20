@@ -150,7 +150,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT timestamp, user_name, operation, object_type, rows_processed, status\nFROM salesforceProd.bulk_api_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC LIMIT 50",
+            "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name, operation, object_type, rows_processed, status\nFROM salesforceProd.bulk_api_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC LIMIT 50",
             "refId": "A"
           }
         ],
