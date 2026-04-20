@@ -776,7 +776,7 @@ def sync_users(sf, client):
     print("Syncing Salesforce users…")
     result = sf.query(
         "SELECT Id, Username, Name, FirstName, LastName, Email, "
-        "Title, Department, UserType, IsActive FROM User LIMIT 2000"
+        "Title, Department, UserType, IsActive, ProfileId, Profile.Name FROM User LIMIT 2000"
     )
     users = result["records"]
     while result.get("nextRecordsUrl"):
@@ -794,12 +794,15 @@ def sync_users(sf, client):
         u.get("Department") or "",
         u.get("UserType") or "",
         1 if u.get("IsActive") else 0,
+        u.get("ProfileId") or "",
+        (u.get("Profile") or {}).get("Name") or "",
     ] for u in users]
 
     client.insert(
         f"{CH_DATABASE}.users", rows,
         column_names=["id","username","name","first_name","last_name",
-                      "email","title","department","user_type","is_active"],
+                      "email","title","department","user_type","is_active",
+                      "profile_id","profile_name"],
     )
     print(f"  Synced {len(rows)} users")
 
