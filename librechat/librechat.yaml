@@ -1,0 +1,16 @@
+version: 1.1.5
+
+mcpServers:
+  clickhouse:
+    command: python3
+    args:
+      - "-m"
+      - "mcp_clickhouse.main"
+    env:
+      CLICKHOUSE_HOST: "${CLICKHOUSE_HOST}"
+      CLICKHOUSE_PORT: "${CLICKHOUSE_PORT}"
+      CLICKHOUSE_USER: "${CLICKHOUSE_USER}"
+      CLICKHOUSE_PASSWORD: "${CLICKHOUSE_PASSWORD}"
+      CLICKHOUSE_SECURE: "true"
+      CLICKHOUSE_DATABASE: "${CLICKHOUSE_DATABASE}"
+      LD_PRELOAD: "/usr/lib/libintl.so.8"

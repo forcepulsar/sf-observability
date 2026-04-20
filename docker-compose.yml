@@ -1,0 +1,111 @@
+services:
+
+  # ── Salesforce ingestion ─────────────────────────────────────────────────────
+  ingest:
+    build:
+      context: ./ingest
+    env_file: .env
+    restart: unless-stopped
+    networks: [sf-obs]
+
+  # ── LibreChat + ClickHouse MCP ───────────────────────────────────────────────
+  librechat:
+    build:
+      context: ./librechat
+      dockerfile: Dockerfile.custom
+    container_name: LibreChat
+    ports:
+      - "3080:3080"
+    depends_on:
+      - mongodb
+      - rag_api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - HOST=0.0.0.0
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - MEILI_HOST=http://meilisearch:7700
+      - RAG_PORT=8000
+      - RAG_API_URL=http://rag_api:8000
+    volumes:
+      - ./.env:/app/.env                                    # LibreChat reads this directly
+      - ./librechat/librechat.yaml:/app/librechat.yaml      # MCP config
+      - librechat_images:/app/client/public/images
+      - librechat_uploads:/app/uploads
+      - librechat_logs:/app/logs
+    restart: unless-stopped
+    networks: [sf-obs]
+
+  mongodb:
+    container_name: chat-mongodb
+    image: mongo:8.0.20
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --noauth
+    networks: [sf-obs]
+
+  meilisearch:
+    container_name: chat-meilisearch
+    image: getmeili/meilisearch:v1.35.1
+    restart: unless-stopped
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+    volumes:
+      - meilisearch_data:/meili_data
+    networks: [sf-obs]
+
+  vectordb:
+    container_name: vectordb
+    image: pgvector/pgvector:0.8.0-pg15-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [sf-obs]
+
+  rag_api:
+    container_name: rag_api
+    image: registry.librechat.ai/danny-avila/librechat-rag-api-dev-lite:latest
+    restart: unless-stopped
+    environment:
+      - DB_HOST=vectordb
+      - RAG_PORT=8000
+    env_file: .env
+    depends_on:
+      - vectordb
+    networks: [sf-obs]
+
+  # ── Grafana ──────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sf-grafana
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    volumes:
+      - ./dashboards/provisioning:/etc/grafana/provisioning
+      - ./dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    networks: [sf-obs]
+
+volumes:
+  mongodb_data:
+  meilisearch_data:
+  pgdata:
+  grafana_data:
+  librechat_images:
+  librechat_uploads:
+  librechat_logs:
+
+networks:
+  sf-obs:
+    driver: bridge
