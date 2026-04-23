@@ -26,6 +26,8 @@ import clickhouse_connect
 from dotenv import load_dotenv
 from simple_salesforce import Salesforce
 
+import metrics
+
 load_dotenv()
 
 # ---------------------------------------------------------------------------
@@ -608,8 +610,17 @@ CONFIG: dict[str, dict] = {
 # ---------------------------------------------------------------------------
 
 def get_sf_client(org_alias: str) -> Salesforce:
-    """Authenticate via SF CLI token (local dev) or username/password (headless/CI)."""
-    # Try CLI token first — works when running locally with `sf org login web`
+    """Authenticate via access token, SF CLI, or username/password (in that priority order)."""
+
+    # 1. Explicit access token — set SF_ACCESS_TOKEN + SF_INSTANCE_URL in .env
+    #    Get the token from: sf org display --target-org CHProd --json
+    access_token = os.environ.get("SF_ACCESS_TOKEN", "").strip()
+    instance_url = os.environ.get("SF_INSTANCE_URL", "").strip()
+    if access_token and instance_url:
+        print(f"  Auth: access token ({instance_url})")
+        return Salesforce(instance_url=instance_url, session_id=access_token)
+
+    # 2. SF CLI token — works when running locally with `sf org login web`
     try:
         result = subprocess.run(
             ["sf", "org", "display", "--target-org", org_alias, "--json"],
@@ -624,17 +635,17 @@ def get_sf_client(org_alias: str) -> Salesforce:
     except Exception:
         pass
 
-    # Headless fallback — uses SF_USERNAME / SF_PASSWORD / SF_SECURITY_TOKEN from .env
+    # 3. Username/password — uses SF_USERNAME / SF_PASSWORD / SF_SECURITY_TOKEN from .env
     username = os.environ.get("SF_USERNAME")
     password = os.environ.get("SF_PASSWORD")
     token    = os.environ.get("SF_SECURITY_TOKEN", "").strip()
     domain   = os.environ.get("SF_DOMAIN", "login")
     if username and password:
         print(f"  Auth: username/password ({username})")
-        return Salesforce(username=username, password=password + token, domain=domain)
+        return Salesforce(username=username, password=password, security_token=token, domain=domain)
 
-    print(f"ERROR: No valid Salesforce auth. Either run `sf org login web --alias {org_alias}` "
-          f"or set SF_USERNAME/SF_PASSWORD in .env")
+    print(f"ERROR: No valid Salesforce auth. Set SF_ACCESS_TOKEN+SF_INSTANCE_URL in .env, "
+          f"run `sf org login web --alias {org_alias}`, or set SF_USERNAME/SF_PASSWORD.")
     sys.exit(1)
 
 
@@ -815,6 +826,10 @@ def main():
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_types = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
+    run_id = metrics.new_run_id()
+    run_started = datetime.utcnow()
+    print(f"Run {run_id} started at {run_started.isoformat()}Z")
+
     print(f"Connecting to Salesforce (org: {org_alias})…")
     sf = get_sf_client(org_alias)
     print(f"  Authenticated via CLI → {sf.sf_instance}")
@@ -827,6 +842,7 @@ def main():
         password=CH_PASSWORD,
         database=CH_DATABASE,
         secure=True,
+        compress=True,          # LZ4 compression on inserts — reduces transfer size >50%
     )
     print(f"  Connected to {CH_HOST}:{CH_PORT}/{CH_DATABASE}")
 
@@ -847,21 +863,28 @@ def main():
         user_map[full_id[:15]] = username
     print(f"  {len(user_result.result_rows)} users loaded")
 
-    grand_total_files = 0
-    grand_total_rows  = 0
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import threading
+    _print_lock = threading.Lock()
 
-    for event_type, cfg in CONFIG.items():
+    def _make_ch_client():
+        """Each thread needs its own ClickHouse client — sessions are not thread-safe."""
+        return clickhouse_connect.get_client(
+            host=CH_HOST, port=CH_PORT, username=CH_USER,
+            password=CH_PASSWORD, database=CH_DATABASE,
+            secure=True, compress=True,
+        )
+
+    def process_event_type(event_type, cfg):
         if only_types and event_type not in only_types:
-            continue
-        if backfill:
-            interval = "Daily"
-            limit    = 30
-        else:
-            interval = cfg["interval"]
-            limit    = 24
+            return 0, 0, 0
+        interval = "Daily" if backfill else cfg["interval"]
+        limit    = 30      if backfill else 24
+        thread_client = _make_ch_client()
 
         mode_label = "backfill (daily, last 30)" if backfill else f"{interval.lower()}, last {limit}"
-        print(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
+        with _print_lock:
+            print(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
 
         result = sf.query(
             f"SELECT Id, EventType, LogDate, LogFile, Interval "
@@ -870,23 +893,69 @@ def main():
             f"ORDER BY LogDate DESC LIMIT {limit}"
         )
         files = result["records"]
-        print(f"  Found {len(files)} file(s)")
+        with _print_lock:
+            print(f"[{event_type}] Found {len(files)} file(s)")
 
         if not files:
-            continue
+            return 0, 0, 0
 
-        done      = already_ingested(client, [f["Id"] for f in files])
+        done      = already_ingested(thread_client, [f["Id"] for f in files])
         new_files = [f for f in files if f["Id"] not in done]
-        print(f"  {len(done)} already ingested, {len(new_files)} new")
+        with _print_lock:
+            print(f"[{event_type}] {len(done)} already ingested, {len(new_files)} new")
 
+        type_files  = 0
+        type_rows   = 0
+        type_errors = 0
         for f in new_files:
-            print(f"  Ingesting {f['Id']} ({f['LogDate']}) → {cfg['table']}…", end=" ", flush=True)
-            row_count = ingest_file(sf, client, f, cfg, user_map)
-            print(f"{row_count} rows")
-            grand_total_files += 1
-            grand_total_rows  += row_count
+            with _print_lock:
+                print(f"[{event_type}] Ingesting {f['Id']} ({f['LogDate']}) → {cfg['table']}…", flush=True)
+            try:
+                log_date = datetime.fromisoformat(f["LogDate"].replace("Z", "+00:00")).date()
+            except (ValueError, TypeError, KeyError):
+                log_date = None
+            try:
+                with metrics.timed_event(
+                    thread_client, CH_DATABASE, run_id, "ingest",
+                    event_type, "elf", f["Id"], log_date,
+                ) as set_rows:
+                    row_count = ingest_file(sf, thread_client, f, cfg, user_map)
+                    set_rows(row_count)
+                with _print_lock:
+                    print(f"[{event_type}] {row_count} rows inserted")
+                type_files += 1
+                type_rows  += row_count
+            except Exception as e:
+                type_errors += 1
+                with _print_lock:
+                    print(f"[{event_type}] ERROR ingesting {f['Id']}: {e}")
+        return type_files, type_rows, type_errors
 
-    print(f"\nDone. {grand_total_files} file(s), {grand_total_rows} row(s) inserted.")
+    grand_total_files  = 0
+    grand_total_rows   = 0
+    grand_total_errors = 0
+
+    # Run up to 6 event types in parallel — Salesforce API and ClickHouse both handle concurrent requests fine
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = {pool.submit(process_event_type, et, cfg): et for et, cfg in CONFIG.items()}
+        for future in as_completed(futures):
+            et = futures[future]
+            try:
+                f_count, r_count, e_count = future.result()
+                grand_total_files  += f_count
+                grand_total_rows   += r_count
+                grand_total_errors += e_count
+            except Exception as exc:
+                grand_total_errors += 1
+                print(f"[{et}] ERROR: {exc}")
+
+    metrics.record_run(
+        client, CH_DATABASE, run_id, "ingest",
+        run_started, datetime.utcnow(),
+        grand_total_files, grand_total_rows, grand_total_errors,
+    )
+
+    print(f"\nDone. {grand_total_files} file(s), {grand_total_rows} row(s), {grand_total_errors} error(s).")
 
 
 if __name__ == "__main__":

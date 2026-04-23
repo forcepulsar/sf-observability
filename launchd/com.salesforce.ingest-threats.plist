@@ -8,11 +8,11 @@
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/bin/python3</string>
-        <string>/Users/julianvirguez/Documents/dev/claude/observability/ingest_threat_store.py</string>
+        <string>/Users/julianvirguez/Documents/dev/sf-observability/ingest/ingest_threat_store.py</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/julianvirguez/Documents/dev/claude/observability</string>
+    <string>/Users/julianvirguez/Documents/dev/sf-observability</string>
 
     <key>StartInterval</key>
     <integer>21600</integer>

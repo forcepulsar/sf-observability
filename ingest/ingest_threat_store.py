@@ -32,6 +32,8 @@ import clickhouse_connect
 from dotenv import load_dotenv
 from simple_salesforce import Salesforce
 
+import metrics
+
 load_dotenv()
 
 SF_ORG_ALIAS = os.getenv("SF_ORG_ALIAS", "CHProd")
@@ -225,30 +227,47 @@ SETUP_AUDIT_CONFIG = {
 
 
 # ---------------------------------------------------------------------------
-# Auth (same as ingest.py — reuses CLI OAuth token)
+# Auth — tries access token, SF CLI, then username/password (mirrors ingest.py)
 # ---------------------------------------------------------------------------
 
 def get_sf_client(org_alias: str) -> Salesforce:
+    """Authenticate via access token, SF CLI, or username/password (in that priority order)."""
+
+    # 1. Explicit access token — set SF_ACCESS_TOKEN + SF_INSTANCE_URL in .env
+    #    Get the token from: sf org display --target-org CHProd --json
+    access_token = os.environ.get("SF_ACCESS_TOKEN", "").strip()
+    instance_url = os.environ.get("SF_INSTANCE_URL", "").strip()
+    if access_token and instance_url:
+        print(f"  Auth: access token ({instance_url})")
+        return Salesforce(instance_url=instance_url, session_id=access_token)
+
+    # 2. SF CLI token — works when running locally with `sf org login web`
     try:
         result = subprocess.run(
             ["sf", "org", "display", "--target-org", org_alias, "--json"],
             capture_output=True, text=True, check=True,
         )
-    except FileNotFoundError:
-        print("ERROR: Salesforce CLI not found.")
-        sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        print(f"ERROR: Could not retrieve org '{org_alias}'. Run: sf org login web --alias {org_alias}")
-        print(e.stderr)
-        sys.exit(1)
+        data = json.loads(result.stdout).get("result", {})
+        access_token = data.get("accessToken")
+        instance_url = data.get("instanceUrl")
+        if access_token and instance_url:
+            print(f"  Auth: Salesforce CLI token ({org_alias})")
+            return Salesforce(instance_url=instance_url, session_id=access_token)
+    except Exception:
+        pass
 
-    data = json.loads(result.stdout).get("result", {})
-    access_token = data.get("accessToken")
-    instance_url = data.get("instanceUrl")
-    if not access_token or not instance_url:
-        print(f"ERROR: Missing token for org '{org_alias}'. Run: sf org login web --alias {org_alias}")
-        sys.exit(1)
-    return Salesforce(instance_url=instance_url, session_id=access_token)
+    # 3. Username/password — uses SF_USERNAME / SF_PASSWORD / SF_SECURITY_TOKEN from .env
+    username = os.environ.get("SF_USERNAME")
+    password = os.environ.get("SF_PASSWORD")
+    token    = os.environ.get("SF_SECURITY_TOKEN", "").strip()
+    domain   = os.environ.get("SF_DOMAIN", "login")
+    if username and password:
+        print(f"  Auth: username/password ({username})")
+        return Salesforce(username=username, password=password, security_token=token, domain=domain)
+
+    print(f"ERROR: No valid Salesforce auth. Set SF_ACCESS_TOKEN+SF_INSTANCE_URL in .env, "
+          f"run `sf org login web --alias {org_alias}`, or set SF_USERNAME/SF_PASSWORD.")
+    sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -297,7 +316,10 @@ def _insert_batch(client, table: str, rows: list[dict]):
 # Main sync function
 # ---------------------------------------------------------------------------
 
-def sync_threat_store(sf, client, only_objects=None, backfill=False):
+def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
+    files_total = 0
+    rows_total  = 0
+    errors      = 0
     for object_name, cfg in THREAT_STORE_CONFIG.items():
         if only_objects and object_name not in only_objects:
             continue
@@ -331,50 +353,69 @@ def sync_threat_store(sf, client, only_objects=None, backfill=False):
         )
         print(f"  Query: EventDate >= {since_str}")
 
+        # Probe accessibility first so that Shield-not-licensed orgs record
+        # a 'skipped' event rather than polluting the error count every run.
         try:
             result = sf.query(soql)
         except Exception as e:
-            # Object may not be available in all orgs
             print(f"  [skip] {object_name} not accessible: {e}")
+            metrics.record_event(
+                client, CH_DATABASE, run_id, "ingest_threat_store",
+                object_name, "threat_store", identifier=since_str,
+                status="skipped", error_message=f"not accessible: {e}",
+            )
             continue
 
-        total = 0
-        while True:
-            records = result.get("records", [])
-            rows = []
-            for rec in records:
-                row = {}
-                for sf_field, ch_col in cfg["column_map"].items():
-                    row[ch_col] = rec.get(sf_field) or ""
+        try:
+            with metrics.timed_event(
+                client, CH_DATABASE, run_id, "ingest_threat_store",
+                object_name, "threat_store", identifier=since_str,
+            ) as set_rows:
+                total = 0
+                while True:
+                    records = result.get("records", [])
+                    rows = []
+                    for rec in records:
+                        row = {}
+                        for sf_field, ch_col in cfg["column_map"].items():
+                            row[ch_col] = rec.get(sf_field) or ""
 
-                # Parse datetime fields
-                for date_col in ("event_date", "created_date"):
-                    row[date_col] = _parse_sf_datetime(row[date_col])
+                        # Parse datetime fields
+                        for date_col in ("event_date", "created_date"):
+                            row[date_col] = _parse_sf_datetime(row[date_col])
 
-                # Parse score
-                try:
-                    row["score"] = int(row.get("score") or 0)
-                except (ValueError, TypeError):
-                    row["score"] = 0
+                        # Parse score
+                        try:
+                            row["score"] = int(row.get("score") or 0)
+                        except (ValueError, TypeError):
+                            row["score"] = 0
 
-                rows.append(row)
+                        rows.append(row)
 
-            if rows:
-                _insert_batch(client, table, rows)
-                total += len(rows)
+                    if rows:
+                        _insert_batch(client, table, rows)
+                        total += len(rows)
 
-            if not result.get("nextRecordsUrl"):
-                break
-            result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
+                    if not result.get("nextRecordsUrl"):
+                        break
+                    result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
 
-        print(f"  Inserted {total} record(s) into {table}")
+                set_rows(total)
+            files_total += 1
+            rows_total  += total
+            print(f"  Inserted {total} record(s) into {table}")
+        except Exception as e:
+            errors += 1
+            print(f"  [error] {object_name}: {e}")
+
+    return files_total, rows_total, errors
 
 
 # ---------------------------------------------------------------------------
 # Setup Audit Trail sync
 # ---------------------------------------------------------------------------
 
-def sync_setup_audit_trail(sf, client, backfill=False):
+def sync_setup_audit_trail(sf, client, run_id, backfill=False):
     """Pull Salesforce Setup Audit Trail records into ClickHouse.
 
     SetupAuditTrail captures every admin action in Setup — profile changes,
@@ -417,36 +458,51 @@ def sync_setup_audit_trail(sf, client, backfill=False):
         result = sf.query(soql)
     except Exception as e:
         print(f"  [skip] SetupAuditTrail not accessible: {e}")
-        return
+        metrics.record_event(
+            client, CH_DATABASE, run_id, "ingest_threat_store",
+            "SetupAuditTrail", "setup_audit", identifier=since_str,
+            status="skipped", error_message=f"not accessible: {e}",
+        )
+        return 0, 0, 0
 
-    total = 0
-    while True:
-        records = result.get("records", [])
-        rows = []
-        for rec in records:
-            created_by = rec.get("CreatedBy") or {}
-            row = {
-                "id":                  rec.get("Id") or "",
-                "action":              rec.get("Action") or "",
-                "section":             rec.get("Section") or "",
-                "created_date":        _parse_sf_datetime(rec.get("CreatedDate")),
-                "created_by_id":       rec.get("CreatedById") or "",
-                "created_by_username": created_by.get("Username") or "",
-                "created_by_name":     created_by.get("Name") or "",
-                "display":             rec.get("Display") or "",
-                "delegate_user":       rec.get("DelegateUser") or "",
-            }
-            rows.append(row)
+    try:
+        with metrics.timed_event(
+            client, CH_DATABASE, run_id, "ingest_threat_store",
+            "SetupAuditTrail", "setup_audit", identifier=since_str,
+        ) as set_rows:
+            total = 0
+            while True:
+                records = result.get("records", [])
+                rows = []
+                for rec in records:
+                    created_by = rec.get("CreatedBy") or {}
+                    row = {
+                        "id":                  rec.get("Id") or "",
+                        "action":              rec.get("Action") or "",
+                        "section":             rec.get("Section") or "",
+                        "created_date":        _parse_sf_datetime(rec.get("CreatedDate")),
+                        "created_by_id":       rec.get("CreatedById") or "",
+                        "created_by_username": created_by.get("Username") or "",
+                        "created_by_name":     created_by.get("Name") or "",
+                        "display":             rec.get("Display") or "",
+                        "delegate_user":       rec.get("DelegateUser") or "",
+                    }
+                    rows.append(row)
 
-        if rows:
-            _insert_batch(client, table, rows)
-            total += len(rows)
+                if rows:
+                    _insert_batch(client, table, rows)
+                    total += len(rows)
 
-        if not result.get("nextRecordsUrl"):
-            break
-        result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
+                if not result.get("nextRecordsUrl"):
+                    break
+                result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
 
-    print(f"  Inserted {total} record(s) into {table}")
+            set_rows(total)
+        print(f"  Inserted {total} record(s) into {table}")
+        return 1, total, 0
+    except Exception as e:
+        print(f"  [error] SetupAuditTrail: {e}")
+        return 0, 0, 1
 
 
 # ---------------------------------------------------------------------------
@@ -461,6 +517,10 @@ def main():
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_objects = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
+    run_id = metrics.new_run_id()
+    run_started = datetime.utcnow()
+    print(f"Run {run_id} started at {run_started.isoformat()}Z")
+
     print(f"Connecting to Salesforce (org: {org_alias})…")
     sf = get_sf_client(org_alias)
     print(f"  Authenticated → {sf.sf_instance}")
@@ -472,16 +532,32 @@ def main():
     )
     print(f"  Connected to {CH_HOST}:{CH_PORT}/{CH_DATABASE}")
 
+    files_total = 0
+    rows_total  = 0
+    errors      = 0
+
     # Threat store objects (Shield / Event Monitoring Add-On)
     # sync_threat_store handles --only= filtering internally.
     if only_objects is None or only_objects & set(THREAT_STORE_CONFIG.keys()):
-        sync_threat_store(sf, client, only_objects=only_objects, backfill=backfill)
+        f, r, e = sync_threat_store(sf, client, run_id, only_objects=only_objects, backfill=backfill)
+        files_total += f
+        rows_total  += r
+        errors      += e
 
     # Setup Audit Trail (no Shield required — available to all orgs)
     if only_objects is None or "SetupAuditTrail" in only_objects:
-        sync_setup_audit_trail(sf, client, backfill=backfill)
+        f, r, e = sync_setup_audit_trail(sf, client, run_id, backfill=backfill)
+        files_total += f
+        rows_total  += r
+        errors      += e
 
-    print("\nDone.")
+    metrics.record_run(
+        client, CH_DATABASE, run_id, "ingest_threat_store",
+        run_started, datetime.utcnow(),
+        files_total, rows_total, errors,
+    )
+
+    print(f"\nDone. {files_total} object(s), {rows_total} row(s), {errors} error(s).")
 
 
 if __name__ == "__main__":
