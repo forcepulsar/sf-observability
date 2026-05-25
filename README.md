@@ -100,13 +100,75 @@ docker compose exec ingest python3 /app/ingest_threat_store.py
 
 ## Connected app registry
 
-Salesforce uses numeric IDs (prefixed `888` or `4H0`) to identify connected apps in event logs. To map these to human-readable names, maintain `schema/connected_app_registry.csv` and load it:
+Salesforce identifies integrations in event logs using opaque numeric IDs rather than human-readable names. The registry maps those IDs to app names so dashboards and queries can display "Amazon AppFlow" instead of `8883i000001R3QM`.
+
+### How it works
+
+A CSV file (`schema/connected_app_registry.csv`) is the source of truth. Run this whenever you update it:
 
 ```bash
 python3 schema/load_registry.py
 ```
 
-To identify unknown `888`-prefix IDs, contact Salesforce Support with the ID — they can look up the app name.
+This inserts the CSV into a `connected_app_registry` ClickHouse table. All dashboards and queries join against it automatically.
+
+A template with the expected columns is at `schema/connected_app_registry_example.csv`:
+
+```
+connected_app_id,app_name,category,notes
+8883i000001R3QM,Amazon AppFlow Embedded Login App,Data Integration,Continuous 24/7 polling...
+0H4Uy0000000cGb,Gearset Deploy,DevTools,
+```
+
+### Finding unknown app IDs
+
+Salesforce uses two ID prefixes with different lookup paths:
+
+| Prefix | Type | How to identify |
+|---|---|---|
+| `0H4` | Connected App (modern OAuth 2.0) | **Salesforce Setup → Apps → Connected Apps** — search by name or browse the list |
+| `888` | OAuthConsumer / Remote Access (legacy) | **Contact Salesforce Support** — these IDs are not visible in the Setup UI |
+
+When you find a new unknown ID in the dashboards, add it to `schema/connected_app_registry.csv` and re-run `load_registry.py`. Unknown apps still appear in results using their raw ID — they are never excluded.
+
+### Best practice: one connected app per integration
+
+Sharing a single Salesforce user across multiple integrations makes it impossible to attribute API usage accurately. Each integration should have its own dedicated Salesforce user and its own connected app. See `SCHEMA_AUDIT.md` for more on the attribution gap.
+
+## Authentication
+
+The ingest pipeline requires **JWT/ECA authentication** (the Salesforce-recommended approach for unattended server processes). Username and password are not supported.
+
+### Option A — JWT/ECA (required for production)
+
+JWT uses a certificate-based flow that never expires between runs. One-time setup:
+
+```bash
+# 1. Generate a key pair
+openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes
+
+# 2. In Salesforce Setup → Apps → External Client Apps:
+#    - Create a new ECA, enable "Enable for Device Flow" and "Use digital signatures"
+#    - Upload server.crt as the certificate
+#    - Copy the Consumer Key
+
+# 3. Add to .env:
+SF_JWT_CLIENT_ID=<Consumer Key>
+SF_JWT_KEY_FILE=/path/to/server.key
+SF_JWT_USERNAME=your-ingest-user@yourorg.com
+```
+
+### Option B — Access token (CI/CD only)
+
+For pipelines that obtain a token externally (e.g. from a prior JWT login step):
+
+```bash
+# Get a token: sf org display --target-org MyOrg --json  →  copy "accessToken"
+SF_ACCESS_TOKEN=<token>
+SF_INSTANCE_URL=https://yourorg.my.salesforce.com
+```
+
+Access tokens expire (typically 2–24 hours). Not suitable for long-running Docker containers.
 
 ## Configuration reference
 
@@ -114,11 +176,13 @@ See `.env.example` for all required variables. Key ones:
 
 | Variable | Description |
 |---|---|
-| `SF_USERNAME` / `SF_PASSWORD` | Salesforce credentials for the ingestion user |
-| `SF_ACCESS_TOKEN` + `SF_INSTANCE_URL` | Alternative: use an access token instead of username/password |
+| `SF_JWT_CLIENT_ID` | Consumer Key from your Salesforce External Client App |
+| `SF_JWT_KEY_FILE` | Absolute path to your JWT private key file (`server.key`) |
+| `SF_JWT_USERNAME` | Salesforce username the ingest runs as |
+| `SF_ACCESS_TOKEN` + `SF_INSTANCE_URL` | CI/CD fallback — pre-obtained access token |
 | `CH_HOST` / `CH_PASSWORD` / `CH_DATABASE` | ClickHouse Cloud connection |
 | `GRAFANA_ADMIN_PASSWORD` | Grafana admin login |
-| `ANTHROPIC_API_KEY` | For LibreChat AI features |
+| `ANTHROPIC_API_KEY` | For LibreChat AI features (optional) |
 
 ## Event types ingested
 
