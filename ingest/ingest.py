@@ -16,11 +16,14 @@ Usage:
 import csv
 import io
 import json
+import logging
 import os
 import subprocess
 import sys
 import tempfile
-from datetime import datetime
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import clickhouse_connect
 from dotenv import load_dotenv
@@ -34,7 +37,12 @@ load_dotenv()
 # Config
 # ---------------------------------------------------------------------------
 
-SF_ORG_ALIAS = os.getenv("SF_ORG_ALIAS", "CHProd")
+SF_ORG_ALIAS     = os.getenv("SF_ORG_ALIAS", "MyOrg")
+
+# JWT/ECA auth (recommended for production — never expires between runs)
+SF_JWT_CLIENT_ID = os.getenv("SF_JWT_CLIENT_ID", "").strip()
+SF_JWT_KEY_FILE  = os.getenv("SF_JWT_KEY_FILE", "").strip()
+SF_JWT_USERNAME  = os.getenv("SF_JWT_USERNAME", "").strip()
 
 CH_HOST     = os.environ["CH_HOST"].removeprefix("https://").removeprefix("http://")
 CH_PORT     = int(os.getenv("CH_PORT", "8443"))
@@ -43,6 +51,49 @@ CH_PASSWORD = os.environ["CH_PASSWORD"]
 CH_DATABASE = os.getenv("CH_DATABASE", "salesforceProd")
 
 BATCH_SIZE = 1000
+
+# ---------------------------------------------------------------------------
+# Logging — writes to stdout and optionally to LOG_FILE if set in .env
+# ---------------------------------------------------------------------------
+
+def _setup_logging() -> logging.Logger:
+    fmt = "[%(asctime)s] %(message)s"
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    log_file = os.getenv("LOG_FILE", "").strip()
+    if log_file:
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(log_file))
+    logging.basicConfig(level=logging.INFO, format=fmt, datefmt="%Y-%m-%d %H:%M:%S",
+                        handlers=handlers)
+    return logging.getLogger("ingest")
+
+log = _setup_logging()
+
+
+# ---------------------------------------------------------------------------
+# P5: Pre-flight config validation
+# ---------------------------------------------------------------------------
+
+def validate_config() -> None:
+    errors = []
+    has_jwt   = SF_JWT_CLIENT_ID and SF_JWT_KEY_FILE and SF_JWT_USERNAME
+    has_token = os.environ.get("SF_ACCESS_TOKEN") and os.environ.get("SF_INSTANCE_URL")
+    if not (has_jwt or has_token):
+        errors.append(
+            "Salesforce auth not configured. JWT/ECA is required: set "
+            "SF_JWT_CLIENT_ID, SF_JWT_KEY_FILE, SF_JWT_USERNAME. "
+            "See .env.example for setup instructions."
+        )
+    if SF_JWT_KEY_FILE and not Path(SF_JWT_KEY_FILE).exists():
+        errors.append(f"SF_JWT_KEY_FILE not found: {SF_JWT_KEY_FILE}")
+    if not os.environ.get("CH_PASSWORD"):
+        errors.append("CH_PASSWORD is not set.")
+    if not CH_HOST:
+        errors.append("CH_HOST is not set.")
+    for err in errors:
+        log.error(f"Config error: {err}")
+    if errors:
+        sys.exit(1)
 
 # ---------------------------------------------------------------------------
 # Per-event-type configuration
@@ -111,23 +162,21 @@ CONFIG: dict[str, dict] = {
         "interval": "Hourly",
     },
 
-    # SalesforceLoginAs is an alias for the same table
+    # SalesforceLoginAs — Salesforce Support logging in as a user.
+    # Completely different schema from LoginAs: no session/delegation fields.
+    # CSV: ACTUAL_USER_ID, OPERATION, IP_ADDRESS, CASE_ID
+    # Shares login_as_events table; distinguish by event_type column.
     "SalesforceLoginAs": {
         "table": "login_as_events",
         "column_map": {
-            "TIMESTAMP_DERIVED":        "timestamp",
-            "EVENT_TYPE":               "event_type",
-            "REQUEST_ID":               "request_id",
-            "ORGANIZATION_ID":          "organization_id",
-            "USER_ID":                  "user_id",
-            "USER_NAME":                "user_name",
-            "DELEGATED_USER_ID":        "delegated_user_id",
-            "DELEGATED_USER_NAME":      "delegated_user_name",
-            "DELEGATED_ORGANIZATION_ID": "delegated_organization_id",
-            "LOGIN_KEY":                "login_key",
-            "SESSION_KEY":              "session_key",
-            "CLIENT_IP":                "client_ip",
-            "LOGIN_TYPE":               "login_type",
+            "TIMESTAMP_DERIVED": "timestamp",
+            "EVENT_TYPE":        "event_type",
+            "REQUEST_ID":        "request_id",
+            "ORGANIZATION_ID":   "organization_id",
+            "ACTUAL_USER_ID":    "actual_user_id",
+            "OPERATION":         "operation",
+            "IP_ADDRESS":        "client_ip",
+            "CASE_ID":           "case_id",
         },
         "numeric_cols": [],
         "interval": "Hourly",
@@ -207,6 +256,9 @@ CONFIG: dict[str, dict] = {
 
     # ------------------------------------------------------------------
     # API (SOAP)  → api_events
+    # CSV: EVENT_TYPE, TIMESTAMP_DERIVED, USER_ID, USER_NAME, METHOD_NAME,
+    #   ENTITY_NAME, RUN_TIME, CPU_TIME, CLIENT_IP, ROWS_PROCESSED, CLIENT_NAME,
+    #   API_TYPE, API_VERSION, EXCEPTION_MESSAGE, QUERY, REQUEST_SIZE, RESPONSE_SIZE
     # ------------------------------------------------------------------
     "API": {
         "table": "api_events",
@@ -223,6 +275,7 @@ CONFIG: dict[str, dict] = {
             "CPU_TIME":          "cpu_time_ns",
             "CLIENT_IP":         "client_ip",
             "ROWS_PROCESSED":    "rows_processed",
+            "CLIENT_NAME":       "client_name",
         },
         "numeric_cols": ["run_time_ns", "cpu_time_ns", "rows_processed"],
         "interval": "Hourly",
@@ -230,30 +283,40 @@ CONFIG: dict[str, dict] = {
 
     # ------------------------------------------------------------------
     # RestApi  → rest_api_events
+    # CSV: EVENT_TYPE, TIMESTAMP_DERIVED, USER_ID, METHOD, URI, STATUS_CODE,
+    #   USER_AGENT, CLIENT_IP, RUN_TIME, CPU_TIME, CONNECTED_APP_ID, ENTITY_NAME,
+    #   QUERY, EXCEPTION_MESSAGE, ROWS_PROCESSED, CLIENT_NAME, MEDIA_TYPE, etc.
     # ------------------------------------------------------------------
     "RestApi": {
         "table": "rest_api_events",
         "column_map": {
-            "TIMESTAMP_DERIVED": "timestamp",
-            "EVENT_TYPE":        "event_type",
-            "REQUEST_ID":        "request_id",
-            "ORGANIZATION_ID":   "organization_id",
-            "USER_ID":           "user_id",
-            "USER_NAME":         "user_name",
-            "METHOD":            "method",
-            "URI":               "uri",
-            "STATUS_CODE":       "status_code",
-            "USER_AGENT":        "user_agent",
-            "CLIENT_IP":         "client_ip",
-            "RUN_TIME":          "run_time_ns",
-            "CPU_TIME":          "cpu_time_ns",
+            "TIMESTAMP_DERIVED":  "timestamp",
+            "EVENT_TYPE":         "event_type",
+            "REQUEST_ID":         "request_id",
+            "ORGANIZATION_ID":    "organization_id",
+            "USER_ID":            "user_id",
+            "USER_NAME":          "user_name",
+            "METHOD":             "method",
+            "URI":                "uri",
+            "STATUS_CODE":        "status_code",
+            "USER_AGENT":         "user_agent",
+            "CLIENT_IP":          "client_ip",
+            "RUN_TIME":           "run_time_ns",
+            "CPU_TIME":           "cpu_time_ns",
+            "CONNECTED_APP_ID":   "connected_app_id",
+            "ENTITY_NAME":        "entity_name",
+            "QUERY":              "query",
+            "EXCEPTION_MESSAGE":  "exception_message",
+            "ROWS_PROCESSED":     "rows_processed",
         },
-        "numeric_cols": ["status_code", "run_time_ns", "cpu_time_ns"],
+        "numeric_cols": ["status_code", "run_time_ns", "cpu_time_ns", "rows_processed"],
         "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
     # BulkApi  → bulk_api_events
+    # CSV: JOB_ID, BATCH_ID, OPERATION_TYPE, ENTITY_TYPE, ROWS_PROCESSED,
+    #   SUCCESS, NUMBER_FAILURES, MESSAGE
     # ------------------------------------------------------------------
     "BulkApi": {
         "table": "bulk_api_events",
@@ -264,12 +327,12 @@ CONFIG: dict[str, dict] = {
             "ORGANIZATION_ID":   "organization_id",
             "USER_ID":           "user_id",
             "USER_NAME":         "user_name",
-            "JOB_ID_DERIVED":    "job_id",
+            "JOB_ID":            "job_id",
             "BATCH_ID":          "batch_id",
-            "OPERATION":         "operation",
-            "OBJECT_TYPE":       "object_type",
+            "OPERATION_TYPE":    "operation",
+            "ENTITY_TYPE":       "object_type",
             "ROWS_PROCESSED":    "rows_processed",
-            "STATUS":            "status",
+            "SUCCESS":           "status",
         },
         "numeric_cols": ["rows_processed"],
         "interval": "Daily",
@@ -277,28 +340,34 @@ CONFIG: dict[str, dict] = {
 
     # ------------------------------------------------------------------
     # BulkApi2  → bulk_api2_events
+    # CSV: JOB_ID, OPERATION_TYPE, ENTITY_TYPE, JOB_STATUS, RECORDS_PROCESSED,
+    #   RECORDS_FAILED, RESULT_SIZE_MB, ERROR_MESSAGE
     # ------------------------------------------------------------------
     "BulkApi2": {
         "table": "bulk_api2_events",
         "column_map": {
-            "TIMESTAMP_DERIVED": "timestamp",
-            "EVENT_TYPE":        "event_type",
-            "REQUEST_ID":        "request_id",
-            "ORGANIZATION_ID":   "organization_id",
-            "USER_ID":           "user_id",
-            "USER_NAME":         "user_name",
-            "JOB_ID_DERIVED":    "job_id",
-            "OPERATION":         "operation",
-            "OBJECT_TYPE":       "object_type",
-            "ROWS_PROCESSED":    "rows_processed",
-            "STATUS":            "status",
+            "TIMESTAMP_DERIVED":  "timestamp",
+            "EVENT_TYPE":         "event_type",
+            "REQUEST_ID":         "request_id",
+            "ORGANIZATION_ID":    "organization_id",
+            "USER_ID":            "user_id",
+            "USER_NAME":          "user_name",
+            "JOB_ID":             "job_id",
+            "OPERATION_TYPE":     "operation",
+            "ENTITY_TYPE":        "object_type",
+            "RECORDS_PROCESSED":  "rows_processed",
+            "JOB_STATUS":         "status",
+            "RECORDS_FAILED":     "records_failed",
+            "ERROR_MESSAGE":      "error_message",
         },
-        "numeric_cols": ["rows_processed"],
+        "numeric_cols": ["rows_processed", "records_failed"],
         "interval": "Daily",
     },
 
     # ------------------------------------------------------------------
     # ApexCallout  → apex_callout_events
+    # CSV: TYPE, METHOD, SUCCESS, STATUS_CODE, TIME, REQUEST_SIZE, RESPONSE_SIZE, URL
+    # Note: CLASS_NAME does not exist in CSV
     # ------------------------------------------------------------------
     "ApexCallout": {
         "table": "apex_callout_events",
@@ -313,7 +382,6 @@ CONFIG: dict[str, dict] = {
             "METHOD":            "method",
             "STATUS_CODE":       "status_code",
             "TIME":              "callout_time_ns",
-            "CLASS_NAME":        "class_name",
             "TYPE":              "type",
         },
         "numeric_cols": ["status_code", "callout_time_ns"],
@@ -322,28 +390,30 @@ CONFIG: dict[str, dict] = {
 
     # ------------------------------------------------------------------
     # NamedCredential  → named_credential_events
+    # CSV: NAMED_CREDENTIAL_NAME, CALLER_PACKAGE_NAMESPACE, URI, RUN_TIME
+    # Note: METHOD and STATUS_CODE do not exist in this event type's CSV
     # ------------------------------------------------------------------
     "NamedCredential": {
         "table": "named_credential_events",
         "column_map": {
-            "TIMESTAMP_DERIVED":    "timestamp",
-            "EVENT_TYPE":           "event_type",
-            "REQUEST_ID":           "request_id",
-            "ORGANIZATION_ID":      "organization_id",
-            "USER_ID":              "user_id",
-            "USER_NAME":            "user_name",
-            "NAMED_CREDENTIAL_ID":  "named_credential_id",
-            "URI":                  "uri",
-            "METHOD":               "method",
-            "STATUS_CODE":          "status_code",
-            "RUN_TIME":             "run_time_ns",
+            "TIMESTAMP_DERIVED":      "timestamp",
+            "EVENT_TYPE":             "event_type",
+            "REQUEST_ID":             "request_id",
+            "ORGANIZATION_ID":        "organization_id",
+            "USER_ID":                "user_id",
+            "USER_NAME":              "user_name",
+            "NAMED_CREDENTIAL_NAME":  "named_credential_id",
+            "URI":                    "uri",
+            "RUN_TIME":               "run_time_ns",
         },
-        "numeric_cols": ["status_code", "run_time_ns"],
+        "numeric_cols": ["run_time_ns"],
         "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
     # MetadataApiOperation  → metadata_api_events
+    # CSV: CLIENT_ID, OPERATION, API_VERSION
+    # Note: TYPE and ENTITY_NAME do not exist in this event type's CSV
     # ------------------------------------------------------------------
     "MetadataApiOperation": {
         "table": "metadata_api_events",
@@ -355,8 +425,7 @@ CONFIG: dict[str, dict] = {
             "USER_ID":           "user_id",
             "USER_NAME":         "user_name",
             "OPERATION":         "operation",
-            "TYPE":              "entity_type",
-            "ENTITY_NAME":       "entity_name",
+            "CLIENT_ID":         "client_id",
             "RUN_TIME":          "run_time_ns",
         },
         "numeric_cols": ["run_time_ns"],
@@ -387,23 +456,27 @@ CONFIG: dict[str, dict] = {
 
     # ------------------------------------------------------------------
     # FlowExecution  → flow_execution_events
+    # CSV: FLOW_VERSION_ID, PROCESS_TYPE, FLOW_LOAD_TIME, TOTAL_EXECUTION_TIME,
+    #   NUMBER_OF_INTERVIEWS, NUMBER_OF_ERRORS
+    # Note: FLOW_ID, FLOW_NAME, RUN_TIME, CPU_TIME, IS_INTERVIEW_LIMIT_HIT
+    #   do not exist in CSV — those columns remain as legacy defaults
     # ------------------------------------------------------------------
     "FlowExecution": {
         "table": "flow_execution_events",
         "column_map": {
-            "TIMESTAMP_DERIVED":      "timestamp",
-            "EVENT_TYPE":             "event_type",
-            "REQUEST_ID":             "request_id",
-            "ORGANIZATION_ID":        "organization_id",
-            "USER_ID":                "user_id",
-            "USER_NAME":              "user_name",
-            "FLOW_ID":                "flow_id",
-            "FLOW_NAME":              "flow_name",
-            "RUN_TIME":               "run_time_ns",
-            "CPU_TIME":               "cpu_time_ns",
-            "IS_INTERVIEW_LIMIT_HIT": "interview_limit_hit",
+            "TIMESTAMP_DERIVED":       "timestamp",
+            "EVENT_TYPE":              "event_type",
+            "REQUEST_ID":              "request_id",
+            "ORGANIZATION_ID":         "organization_id",
+            "USER_ID":                 "user_id",
+            "USER_NAME":               "user_name",
+            "FLOW_VERSION_ID":         "flow_id",
+            "PROCESS_TYPE":            "process_type",
+            "TOTAL_EXECUTION_TIME":    "total_execution_time_ns",
+            "NUMBER_OF_INTERVIEWS":    "number_of_interviews",
+            "NUMBER_OF_ERRORS":        "number_of_errors",
         },
-        "numeric_cols": ["run_time_ns", "cpu_time_ns", "interview_limit_hit"],
+        "numeric_cols": ["total_execution_time_ns", "number_of_interviews", "number_of_errors"],
         "interval": "Hourly",
     },
 
@@ -435,6 +508,10 @@ CONFIG: dict[str, dict] = {
     # Used for Anonymous Apex detection: filter WHERE quiddity = 'X'
     # Quiddity values: A=Aura, E=AuraEnabled, X=Anonymous, etc.
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # ApexExecution  → apex_execution_events
+    # Note: LIMIT_USAGE_PERCENT does not exist in CSV
+    # ------------------------------------------------------------------
     "ApexExecution": {
         "table": "apex_execution_events",
         "column_map": {
@@ -448,9 +525,9 @@ CONFIG: dict[str, dict] = {
             "ENTRY_POINT":          "entry_point",
             "CPU_TIME":             "cpu_time_ns",
             "RUN_TIME":             "run_time_ns",
-            "LIMIT_USAGE_PERCENT":  "limit_usage_percent",
+            "NUMBER_SOQL_QUERIES":  "number_soql_queries",
         },
-        "numeric_cols": ["cpu_time_ns", "run_time_ns", "limit_usage_percent"],
+        "numeric_cols": ["cpu_time_ns", "run_time_ns", "number_soql_queries"],
         "interval": "Hourly",
     },
 
@@ -617,42 +694,62 @@ CONFIG: dict[str, dict] = {
 # ---------------------------------------------------------------------------
 
 def get_sf_client(org_alias: str) -> Salesforce:
-    """Authenticate via access token, SF CLI, or username/password (in that priority order)."""
+    """Authenticate via JWT/ECA (required) or a pre-obtained access token (CI/CD only).
 
-    # 1. Explicit access token — set SF_ACCESS_TOKEN + SF_INSTANCE_URL in .env
-    #    Get the token from: sf org display --target-org CHProd --json
+    JWT/ECA is the only supported auth method for production. Username/password
+    and browser-login tokens are not supported — they expire silently and are
+    a security anti-pattern for unattended server processes.
+
+    Setup (one time):
+        1. Create an External Client App in Salesforce Setup with JWT OAuth enabled.
+        2. openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes
+        3. Upload server.crt to the ECA. Copy the Consumer Key to SF_JWT_CLIENT_ID.
+        4. Set SF_JWT_KEY_FILE (absolute path to server.key) and SF_JWT_USERNAME in .env.
+    """
+
+    # Primary: JWT/ECA — mandatory for production, never expires between runs.
+    if SF_JWT_CLIENT_ID and SF_JWT_KEY_FILE and SF_JWT_USERNAME:
+        instance_url = os.environ.get("SF_INSTANCE_URL", "https://login.salesforce.com").strip()
+        try:
+            subprocess.run(
+                ["sf", "org", "login", "jwt",
+                 "--client-id", SF_JWT_CLIENT_ID,
+                 "--jwt-key-file", SF_JWT_KEY_FILE,
+                 "--username", SF_JWT_USERNAME,
+                 "--instance-url", instance_url,
+                 "--alias", org_alias,
+                 "--json"],
+                capture_output=True, text=True, check=True,
+            )
+            result = subprocess.run(
+                ["sf", "org", "display", "--target-org", org_alias, "--json"],
+                capture_output=True, text=True, check=True,
+            )
+            data = json.loads(result.stdout).get("result", {})
+            access_token = data.get("accessToken")
+            resolved_url = data.get("instanceUrl", instance_url)
+            if access_token:
+                log.info(f"  Auth: JWT/ECA ({SF_JWT_USERNAME})")
+                return Salesforce(instance_url=resolved_url, session_id=access_token)
+            log.error("  JWT auth succeeded but no access token returned.")
+            sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            log.error(f"  JWT auth failed: {e.stderr.strip()}")
+            sys.exit(1)
+
+    # Secondary: pre-obtained access token — acceptable for CI/CD pipelines that
+    # obtain the token externally via JWT and inject it as an environment variable.
     access_token = os.environ.get("SF_ACCESS_TOKEN", "").strip()
     instance_url = os.environ.get("SF_INSTANCE_URL", "").strip()
     if access_token and instance_url:
-        print(f"  Auth: access token ({instance_url})")
+        log.info(f"  Auth: access token ({instance_url})")
         return Salesforce(instance_url=instance_url, session_id=access_token)
 
-    # 2. SF CLI token — works when running locally with `sf org login web`
-    try:
-        result = subprocess.run(
-            ["sf", "org", "display", "--target-org", org_alias, "--json"],
-            capture_output=True, text=True, check=True,
-        )
-        data = json.loads(result.stdout).get("result", {})
-        access_token = data.get("accessToken")
-        instance_url = data.get("instanceUrl")
-        if access_token and instance_url:
-            print(f"  Auth: Salesforce CLI token ({org_alias})")
-            return Salesforce(instance_url=instance_url, session_id=access_token)
-    except Exception:
-        pass
-
-    # 3. Username/password — uses SF_USERNAME / SF_PASSWORD / SF_SECURITY_TOKEN from .env
-    username = os.environ.get("SF_USERNAME")
-    password = os.environ.get("SF_PASSWORD")
-    token    = os.environ.get("SF_SECURITY_TOKEN", "").strip()
-    domain   = os.environ.get("SF_DOMAIN", "login")
-    if username and password:
-        print(f"  Auth: username/password ({username})")
-        return Salesforce(username=username, password=password, security_token=token, domain=domain)
-
-    print(f"ERROR: No valid Salesforce auth. Set SF_ACCESS_TOKEN+SF_INSTANCE_URL in .env, "
-          f"run `sf org login web --alias {org_alias}`, or set SF_USERNAME/SF_PASSWORD.")
+    log.error(
+        "Salesforce auth not configured. JWT/ECA is required.\n"
+        "  Set SF_JWT_CLIENT_ID, SF_JWT_KEY_FILE, and SF_JWT_USERNAME in .env.\n"
+        "  See .env.example for step-by-step setup instructions."
+    )
     sys.exit(1)
 
 
@@ -723,8 +820,7 @@ def _insert_batch(client, table: str, rows: list[dict]):
     try:
         client.insert(f"{CH_DATABASE}.{table}", data, column_names=columns)
     except Exception as e:
-        # Retry row-by-row to isolate and skip bad rows
-        print(f"\n  [warn] Batch insert failed ({e}), retrying row-by-row…")
+        log.warning(f"  Batch insert failed ({e}), retrying row-by-row…")
         skipped = 0
         for row in rows:
             try:
@@ -732,7 +828,7 @@ def _insert_batch(client, table: str, rows: list[dict]):
             except Exception:
                 skipped += 1
         if skipped:
-            print(f"  [warn] Skipped {skipped} bad row(s) in {table}")
+            log.warning(f"  Skipped {skipped} bad row(s) in {table}")
 
 
 # ---------------------------------------------------------------------------
@@ -745,19 +841,34 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
     table = cfg["table"]
     url = f"https://{sf.sf_instance}{file_meta['LogFile']}"
 
-    response = sf.session.get(
-        url,
-        headers={"Authorization": f"Bearer {sf.session_id}"},
-        stream=True,
-        timeout=300,
-    )
-    response.raise_for_status()
+    # P2: retry with exponential backoff for transient Salesforce errors (429, 5xx).
+    # A missed file within the 24h retention window is permanent data loss.
+    for attempt in range(3):
+        response = sf.session.get(
+            url,
+            headers={"Authorization": f"Bearer {sf.session_id}"},
+            stream=True,
+            timeout=600,  # 10 min — large daily files on slow connections need headroom
+        )
+        if response.status_code in (429, 500, 502, 503) and attempt < 2:
+            wait = 10 * (2 ** attempt)  # 10s → 20s
+            log.warning(f"  HTTP {response.status_code} from Salesforce, retrying in {wait}s…")
+            time.sleep(wait)
+            continue
+        response.raise_for_status()
+        break
 
-    # Download to a temp file in 64KB chunks so large files don't exhaust
-    # memory and Salesforce's connection timeout can't interrupt CSV parsing.
+    # Dynamic chunk size: target ~100 iterations per file, bounded 1MB–2MB.
+    # Reduces Python loop overhead for large files vs a fixed 64KB chunk.
+    content_length = int(response.headers.get("content-length", 0))
+    chunk_size = (
+        min(max(1024 * 1024, content_length // 100), 2 * 1024 * 1024)
+        if content_length else 1024 * 1024
+    )
+
     tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False)
     try:
-        for chunk in response.iter_content(chunk_size=65536):
+        for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk:
                 tmp.write(chunk)
         tmp.flush()
@@ -791,7 +902,7 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
 
 def sync_users(sf, client):
     """Pull all Salesforce users into the ClickHouse lookup table."""
-    print("Syncing Salesforce users…")
+    log.info("Syncing Salesforce users…")
     result = sf.query(
         "SELECT Id, Username, Name, FirstName, LastName, Email, "
         "Title, Department, UserType, IsActive, ProfileId, Profile.Name FROM User LIMIT 2000"
@@ -822,7 +933,7 @@ def sync_users(sf, client):
                       "email","title","department","user_type","is_active",
                       "profile_id","profile_name"],
     )
-    print(f"  Synced {len(rows)} users")
+    log.info(f"  Synced {len(rows)} users")
 
 
 def main():
@@ -833,15 +944,17 @@ def main():
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_types = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
+    validate_config()
+
     run_id = metrics.new_run_id()
-    run_started = datetime.utcnow()
-    print(f"Run {run_id} started at {run_started.isoformat()}Z")
+    run_started = datetime.now(timezone.utc)
+    log.info(f"Run {run_id} started at {run_started.isoformat()}Z")
 
-    print(f"Connecting to Salesforce (org: {org_alias})…")
+    log.info(f"Connecting to Salesforce (org: {org_alias})…")
     sf = get_sf_client(org_alias)
-    print(f"  Authenticated via CLI → {sf.sf_instance}")
+    log.info(f"  Authenticated → {sf.sf_instance}")
 
-    print("Connecting to ClickHouse…")
+    log.info("Connecting to ClickHouse…")
     client = clickhouse_connect.get_client(
         host=CH_HOST,
         port=CH_PORT,
@@ -851,16 +964,11 @@ def main():
         secure=True,
         compress=True,          # LZ4 compression on inserts — reduces transfer size >50%
     )
-    print(f"  Connected to {CH_HOST}:{CH_PORT}/{CH_DATABASE}")
+    log.info(f"  Connected to {CH_HOST}:{CH_PORT}/{CH_DATABASE}")
 
     sync_users(sf, client)
 
-    # Build user_id → username map so parse_row can enrich rows where
-    # the SF event log CSV leaves user_name blank. Both the 18-char ID
-    # (from the users table) and the 15-char ID (used in event logs) are
-    # stored as keys so either format matches without truncation logic in
-    # the hot path.
-    print("Building user lookup map…")
+    log.info("Building user lookup map…")
     user_result = client.query(
         f"SELECT id, username FROM {CH_DATABASE}.users WHERE username != ''"
     )
@@ -868,11 +976,9 @@ def main():
     for full_id, username in user_result.result_rows:
         user_map[full_id] = username
         user_map[full_id[:15]] = username
-    print(f"  {len(user_result.result_rows)} users loaded")
+    log.info(f"  {len(user_result.result_rows)} users loaded")
 
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    import threading
-    _print_lock = threading.Lock()
 
     def _make_ch_client():
         """Each thread needs its own ClickHouse client — sessions are not thread-safe."""
@@ -889,34 +995,44 @@ def main():
         limit    = 90      if backfill else 24
         thread_client = _make_ch_client()
 
-        mode_label = "backfill (daily, last 90)" if backfill else f"{interval.lower()}, last {limit}"
-        with _print_lock:
-            print(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
+        # P4: explicit date-range filter in normal mode so the intent is unambiguous
+        # and gaps can't occur silently if > limit files exist (e.g. after an outage).
+        if backfill:
+            mode_label  = "backfill (daily, last 90)"
+            date_filter = ""
+        else:
+            now = datetime.now(timezone.utc)
+            if interval == "Hourly":
+                cutoff = (now - timedelta(hours=limit)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            else:
+                cutoff = (now - timedelta(days=limit)).strftime("%Y-%m-%dT00:00:00Z")
+            mode_label  = f"{interval.lower()}, last {limit}"
+            date_filter = f"AND LogDate >= {cutoff} "
+
+        log.info(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
 
         result = sf.query(
             f"SELECT Id, EventType, LogDate, LogFile, Interval "
             f"FROM EventLogFile "
             f"WHERE EventType = '{event_type}' AND Interval = '{interval}' "
+            f"{date_filter}"
             f"ORDER BY LogDate DESC LIMIT {limit}"
         )
         files = result["records"]
-        with _print_lock:
-            print(f"[{event_type}] Found {len(files)} file(s)")
+        log.info(f"[{event_type}] Found {len(files)} file(s)")
 
         if not files:
             return 0, 0, 0
 
         done      = already_ingested(thread_client, [f["Id"] for f in files])
         new_files = [f for f in files if f["Id"] not in done]
-        with _print_lock:
-            print(f"[{event_type}] {len(done)} already ingested, {len(new_files)} new")
+        log.info(f"[{event_type}] {len(done)} already ingested, {len(new_files)} new")
 
         type_files  = 0
         type_rows   = 0
         type_errors = 0
         for f in new_files:
-            with _print_lock:
-                print(f"[{event_type}] Ingesting {f['Id']} ({f['LogDate']}) → {cfg['table']}…", flush=True)
+            log.info(f"[{event_type}] Ingesting {f['Id']} ({f['LogDate']}) → {cfg['table']}…")
             try:
                 log_date = datetime.fromisoformat(f["LogDate"].replace("Z", "+00:00")).date()
             except (ValueError, TypeError, KeyError):
@@ -928,14 +1044,12 @@ def main():
                 ) as set_rows:
                     row_count = ingest_file(sf, thread_client, f, cfg, user_map)
                     set_rows(row_count)
-                with _print_lock:
-                    print(f"[{event_type}] {row_count} rows inserted")
+                log.info(f"[{event_type}] {row_count} rows inserted")
                 type_files += 1
                 type_rows  += row_count
             except Exception as e:
                 type_errors += 1
-                with _print_lock:
-                    print(f"[{event_type}] ERROR ingesting {f['Id']}: {e}")
+                log.error(f"[{event_type}] ERROR ingesting {f['Id']}: {e}")
         return type_files, type_rows, type_errors
 
     grand_total_files  = 0
@@ -954,15 +1068,15 @@ def main():
                 grand_total_errors += e_count
             except Exception as exc:
                 grand_total_errors += 1
-                print(f"[{et}] ERROR: {exc}")
+                log.error(f"[{et}] ERROR: {exc}")
 
     metrics.record_run(
         client, CH_DATABASE, run_id, "ingest",
-        run_started, datetime.utcnow(),
+        run_started, datetime.now(timezone.utc),
         grand_total_files, grand_total_rows, grand_total_errors,
     )
 
-    print(f"\nDone. {grand_total_files} file(s), {grand_total_rows} row(s), {grand_total_errors} error(s).")
+    log.info(f"\nDone. {grand_total_files} file(s), {grand_total_rows} row(s), {grand_total_errors} error(s).")
 
 
 if __name__ == "__main__":

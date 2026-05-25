@@ -518,7 +518,7 @@ def main():
     only_objects = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
     run_id = metrics.new_run_id()
-    run_started = datetime.utcnow()
+    run_started = datetime.now(timezone.utc)
     print(f"Run {run_id} started at {run_started.isoformat()}Z")
 
     print(f"Connecting to Salesforce (org: {org_alias})…")
@@ -553,7 +553,7 @@ def main():
 
     metrics.record_run(
         client, CH_DATABASE, run_id, "ingest_threat_store",
-        run_started, datetime.utcnow(),
+        run_started, datetime.now(timezone.utc),
         files_total, rows_total, errors,
     )
 
