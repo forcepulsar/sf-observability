@@ -3,3 +3,9 @@ __pycache__/
 *.pyc
 .DS_Store
 .mcp.json
+
+# Instance-specific investigation files — not for public repo
+API_LIMIT_INVESTIGATION.md
+PRESENTATION.md
+sf_support_888_connected_apps.csv
+schema/connected_app_registry.csv

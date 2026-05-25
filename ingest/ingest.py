@@ -568,19 +568,26 @@ CONFIG: dict[str, dict] = {
     "ApiTotalUsage": {
         "table": "api_total_usage_events",
         "column_map": {
-            "TIMESTAMP_DERIVED": "timestamp",
-            "EVENT_TYPE":        "event_type",
-            "REQUEST_ID":        "request_id",
-            "ORGANIZATION_ID":   "organization_id",
-            "API_FAMILY":        "api_family",
-            "HTTP_METHOD":       "http_method",
-            "STATUS_CODE":       "status_code",
-            "CLIENT_NAME":       "client_name",
-            "API_RESOURCE":      "api_resource",
-            "OBJECT_NAME":       "object_name",
-            "RUN_TIME":          "run_time_ms",
+            "TIMESTAMP_DERIVED":        "timestamp",
+            "EVENT_TYPE":               "event_type",
+            "REQUEST_ID":               "request_id",
+            "ORGANIZATION_ID":          "organization_id",
+            "USER_ID":                  "user_id",
+            "USER_NAME":                "user_name",
+            "API_FAMILY":               "api_family",
+            "API_VERSION":              "api_version",
+            "HTTP_METHOD":              "http_method",
+            "STATUS_CODE":              "status_code",
+            "CLIENT_NAME":              "client_name",
+            "CLIENT_IP":                "client_ip",
+            "CONNECTED_APP_ID":         "connected_app_id",
+            "CONNECTED_APP_NAME":       "connected_app_name",
+            "API_RESOURCE":             "api_resource",
+            "ENTITY_NAME":              "entity_name",
+            "COUNTS_AGAINST_API_LIMIT": "counts_against_api_limit",
+            "API_CLIENT_CATEGORY":      "api_client_category",
         },
-        "numeric_cols": ["status_code", "run_time_ms"],
+        "numeric_cols": ["status_code", "counts_against_api_limit"],
         "interval": "Daily",
     },
 
@@ -879,10 +886,10 @@ def main():
         if only_types and event_type not in only_types:
             return 0, 0, 0
         interval = "Daily" if backfill else cfg["interval"]
-        limit    = 30      if backfill else 24
+        limit    = 90      if backfill else 24
         thread_client = _make_ch_client()
 
-        mode_label = "backfill (daily, last 30)" if backfill else f"{interval.lower()}, last {limit}"
+        mode_label = "backfill (daily, last 90)" if backfill else f"{interval.lower()}, last {limit}"
         with _print_lock:
             print(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
 

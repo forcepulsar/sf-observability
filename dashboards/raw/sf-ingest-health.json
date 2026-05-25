@@ -1,0 +1,387 @@
+{
+  "uid": "sf-ingest-health",
+  "title": "Ingestion Pipeline Health",
+  "tags": ["ingestion", "ops"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "time": { "from": "now-14d", "to": "now" },
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 2 },
+      "options": {
+        "mode": "markdown",
+        "content": "## How this works\nThe pipeline runs **every 6 hours**. It has two steps: **① Event Logs** (pulls login, API, Apex, etc. from Salesforce — takes ~30 min) then **② Threats & Audit** (pulls Shield detections and config changes — takes ~1 min). Between runs it sleeps. If the laptop sleeps/reboots, the sleep gets stuck and the pipeline won't run again until restarted."
+      }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pipeline Status",
+      "description": "Green = sleeping normally. Yellow = overdue (sleep may be stuck). Red = hasn't run in 24h+.",
+      "gridPos": { "x": 0, "y": 2, "w": 5, "h": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value",
+        "orientation": "auto",
+        "text": { "valueSize": 28 }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "range", "options": { "from": -9999, "to": 0,   "result": { "text": "RUNNING NOW",    "color": "blue",   "index": 0 } } },
+            { "type": "range", "options": { "from": 0,     "to": 360, "result": { "text": "SLEEPING OK",    "color": "green",  "index": 1 } } },
+            { "type": "range", "options": { "from": 360,   "to": 720, "result": { "text": "OVERDUE",        "color": "yellow", "index": 2 } } },
+            { "type": "range", "options": { "from": 720,   "to": 9999999, "result": { "text": "STUCK — RESTART", "color": "red", "index": 3 } } }
+          ]
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT dateDiff('minute', max(ended_at), now()) AS minutes_since_last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Next Run",
+      "description": "When the next ingest cycle is expected to start. If this shows 'ago', the pipeline is stuck.",
+      "gridPos": { "x": 5, "y": 2, "w": 5, "h": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "green",  "value": 1700000000000 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 21600)) * 1000 AS next_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "① Event Logs — Last Run",
+      "description": "How long ago the main event log ingest (logins, API, Apex, etc.) last completed successfully.",
+      "gridPos": { "x": 10, "y": 2, "w": 5, "h": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 1700000000000 },
+              { "color": "red",    "value": 1700086400000 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "② Threats & Audit — Last Run",
+      "description": "How long ago the Shield threat detections and SetupAuditTrail sync last completed.",
+      "gridPos": { "x": 15, "y": 2, "w": 5, "h": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 1700000000000 },
+              { "color": "red",    "value": 1700086400000 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest_threat_store' AND status IN ('success','partial')",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Total Events in ClickHouse",
+      "gridPos": { "x": 20, "y": 2, "w": 4, "h": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT sum(rows_total) AS total FROM salesforceProd.ingestion_runs WHERE status IN ('success','partial')",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Currently Ingesting?",
+      "description": "Shows how long ago the last individual file was processed. Under 10 minutes = a run is actively in progress right now.",
+      "gridPos": { "x": 0, "y": 7, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "displayName": "Last file processed",
+          "mappings": [
+            { "type": "range", "options": { "from": 0,  "to": 10,  "result": { "text": "YES — ingesting now", "color": "blue",  "index": 0 } } },
+            { "type": "range", "options": { "from": 10, "to": 9999999, "result": { "text": "No — sleeping",     "color": "green", "index": 1 } } }
+          ]
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT dateDiff('minute', max(started_at), now()) AS minutes_since_last_file FROM salesforceProd.ingestion_events",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Rows Loaded — Last Run",
+      "gridPos": { "x": 6, "y": 7, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "textMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT rows_total FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Duration — Last Run",
+      "gridPos": { "x": 12, "y": 7, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "textMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "unit": "m", "decimals": 1 } },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT round(duration_ms / 60000, 1) AS minutes FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Errors — Last Run",
+      "gridPos": { "x": 18, "y": 7, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red",   "value": 1 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT errors FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "type": "barchart",
+      "title": "Rows Loaded Per Run — Last 14 Days",
+      "description": "Each bar is one ingest cycle. Big bars = lots of catchup (e.g. after laptop was off). Small bars = normal incremental run.",
+      "gridPos": { "x": 0, "y": 11, "w": 24, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "xField": "started_at",
+        "orientation": "auto",
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "colorByField": "script"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "ingest" },            "properties": [{ "id": "displayName", "value": "① Event Logs" }] },
+          { "matcher": { "id": "byName", "options": "ingest_threat_store" },"properties": [{ "id": "displayName", "value": "② Threats & Audit" }] }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT started_at, rows_total, script FROM salesforceProd.ingestion_runs WHERE $__timeFilter(started_at) ORDER BY started_at ASC",
+          "format": "table"
+        }
+      ]
+    },
+
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Run History",
+      "description": "All recent runs. Status is green = success, yellow = partial (some files skipped), red = error.",
+      "gridPos": { "x": 0, "y": 19, "w": 24, "h": 9 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "options": {
+        "sortBy": [{ "displayName": "Started", "desc": true }],
+        "footer": { "show": false }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "status" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "custom.width", "value": 120 },
+              {
+                "id": "mappings",
+                "value": [{
+                  "type": "value",
+                  "options": {
+                    "success": { "color": "green",  "index": 0, "text": "success" },
+                    "partial": { "color": "yellow", "index": 1, "text": "partial" },
+                    "error":   { "color": "red",    "index": 2, "text": "error" }
+                  }
+                }]
+              }
+            ]
+          },
+          { "matcher": { "id": "byName", "options": "duration_ms" },  "properties": [{ "id": "unit", "value": "ms" },    { "id": "displayName", "value": "Duration" },  { "id": "custom.width", "value": 120 }] },
+          { "matcher": { "id": "byName", "options": "rows_total" },   "properties": [{ "id": "unit", "value": "short" }, { "id": "displayName", "value": "Rows Loaded" }, { "id": "custom.width", "value": 130 }] },
+          { "matcher": { "id": "byName", "options": "files_total" },  "properties": [{ "id": "displayName", "value": "Files" }, { "id": "custom.width", "value": 80 }] },
+          { "matcher": { "id": "byName", "options": "errors" },       "properties": [{ "id": "displayName", "value": "Errors" }, { "id": "custom.width", "value": 80 }] },
+          { "matcher": { "id": "byName", "options": "started_at" },   "properties": [{ "id": "displayName", "value": "Started" }, { "id": "unit", "value": "dateTimeAsLocal" }] },
+          { "matcher": { "id": "byName", "options": "ended_at" },     "properties": [{ "id": "displayName", "value": "Ended" },   { "id": "unit", "value": "dateTimeAsLocal" }] },
+          {
+            "matcher": { "id": "byName", "options": "script" },
+            "properties": [
+              { "id": "displayName", "value": "Step" },
+              { "id": "custom.width", "value": 180 },
+              {
+                "id": "mappings",
+                "value": [{
+                  "type": "value",
+                  "options": {
+                    "ingest":             { "text": "① Event Logs",      "index": 0 },
+                    "ingest_threat_store":{ "text": "② Threats & Audit", "index": 1 }
+                  }
+                }]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "rawSql": "SELECT script, started_at, ended_at, duration_ms, files_total, rows_total, errors, status FROM salesforceProd.ingestion_runs ORDER BY started_at DESC LIMIT 30",
+          "format": "table"
+        }
+      ]
+    }
+
+  ]
+}

@@ -453,7 +453,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) AND status_code >= 400",
+            "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) AND status_code >= 400 AND counts_against_api_limit = 1",
             "format": 1
           }
         ]
@@ -507,7 +507,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable API Calls\" FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -1339,7 +1339,7 @@
       {
         "type": "timeseries",
         "id": 50,
-        "title": "API Calls Over Time by Family",
+        "title": "API Calls Over Time by Family (Billable)",
         "gridPos": {
           "h": 8,
           "w": 12,
@@ -1374,7 +1374,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  api_family AS \"API Family\",\n  count() AS \"Calls\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_family != ''\nGROUP BY time, api_family\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  api_family AS \"API Family\",\n  count() AS \"Calls\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_family != '' AND counts_against_api_limit = 1\nGROUP BY time, api_family\nORDER BY time",
             "format": 0
           }
         ]
@@ -1439,7 +1439,7 @@
         "options": {
           "sortBy": [
             {
-              "displayName": "Calls",
+              "displayName": "Billable Calls",
               "desc": true
             }
           ],
@@ -1457,7 +1457,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  client_name AS \"Client\",\n  count() AS \"Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND client_name != ''\nGROUP BY client_name\nORDER BY \"Calls\" DESC\nLIMIT 20",
+            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(unknown)') AS \"App / Client\",\n  user_name AS \"User\",\n  count() AS \"Total Calls\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"App / Client\", user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 25",
             "format": 1
           }
         ]
@@ -2336,6 +2336,204 @@
             },
             "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(countIf(status_code >= 400) / count(), 4) AS \"Current Error Rate\", (SELECT round(countIf(status_code >= 400) / count(), 4) FROM salesforceProd.api_total_usage_events WHERE timestamp >= now() - INTERVAL 30 DAY) AS \"30-day Avg\" FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
             "format": 0
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": 109,
+        "title": "API Limit Monitoring",
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 125
+        }
+      },
+      {
+        "type": "stat",
+        "id": 81,
+        "title": "API Calls vs 800K Daily Limit (Rolling 24h)",
+        "description": "Total API calls counting toward Salesforce's 800K rolling 24h limit",
+        "gridPos": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 126
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ]
+          },
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "textMode": "auto",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 640000
+                },
+                {
+                  "color": "red",
+                  "value": 720000
+                }
+              ]
+            },
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": []
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable Calls (Last 24h)\"\nFROM salesforceProd.api_total_usage_events\nWHERE timestamp >= now() - INTERVAL 24 HOUR",
+            "format": 1
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": 82,
+        "title": "Billable vs Non-Billable API Calls Over Time",
+        "gridPos": {
+          "h": 8,
+          "w": 16,
+          "x": 8,
+          "y": 126
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10
+            }
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  countIf(counts_against_api_limit = 1) AS \"Counts Toward Limit\",\n  countIf(counts_against_api_limit = 0) AS \"Does Not Count\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "format": 0
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "id": 83,
+        "title": "Top Users — Billable API Calls",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 134
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "options": {
+          "sortBy": [
+            {
+              "displayName": "Billable Calls",
+              "desc": true
+            }
+          ],
+          "footer": {
+            "show": false
+          }
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "rawSql": "SELECT\n  user_name AS \"User\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\",\n  groupUniqArrayIf(5)(COALESCE(NULLIF(connected_app_name,''), NULLIF(connected_app_id,''), client_name), connected_app_id != '' OR client_name != '') AS \"Apps Used\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\n  AND user_name != ''\nGROUP BY user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
+            "format": 1
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "id": 84,
+        "title": "Top Connected Apps — Billable API Calls",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 134
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "options": {
+          "sortBy": [
+            {
+              "displayName": "Billable Calls",
+              "desc": true
+            }
+          ],
+          "footer": {
+            "show": false
+          }
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(platform / unnamed)') AS \"Connected App\",\n  api_client_category AS \"Category\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"Connected App\", api_client_category\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
+            "format": 1
           }
         ]
       }

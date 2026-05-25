@@ -1,0 +1,4 @@
+connected_app_id,app_name,category,notes
+8883i000001XXXXX,Your App Name Here,Data Integration,Replace this with your connected app ID and name from Salesforce Support
+888Hs00000XXXXXX,Another Integration,Data Integration,Run load_registry.py after updating this file
+0H4Uy0000XXXXXXX,Example Connected App,DevTools,Connected apps (0H4 prefix) can be found in Salesforce Setup → Connected Apps
