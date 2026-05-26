@@ -82,7 +82,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.credential_stuffing_events WHERE $__timeFilter(event_date)",
+            "rawSql": "SELECT count() as n FROM credential_stuffing_events WHERE $__timeFilter(event_date)",
             "refId": "A"
           }
         ],
@@ -157,7 +157,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.session_hijacking_events WHERE $__timeFilter(event_date)",
+            "rawSql": "SELECT count() as n FROM session_hijacking_events WHERE $__timeFilter(event_date)",
             "refId": "A"
           }
         ],
@@ -236,7 +236,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.report_anomaly_events WHERE $__timeFilter(event_date)",
+            "rawSql": "SELECT count() as n FROM report_anomaly_events WHERE $__timeFilter(event_date)",
             "refId": "A"
           }
         ],
@@ -311,7 +311,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND user_type='Guest' AND login_status!='LOGIN_NO_ERROR'",
+            "rawSql": "SELECT count() as n FROM login_events WHERE $__timeFilter(timestamp) AND user_type='Guest' AND login_status!='LOGIN_NO_ERROR'",
             "refId": "A"
           }
         ],
@@ -386,7 +386,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.api_anomaly_events WHERE $__timeFilter(event_date)",
+            "rawSql": "SELECT count() as n FROM api_anomaly_events WHERE $__timeFilter(event_date)",
             "refId": "A"
           }
         ],
@@ -457,7 +457,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND user_type='Guest'",
+            "rawSql": "SELECT count() as n FROM login_events WHERE $__timeFilter(timestamp) AND user_type='Guest'",
             "refId": "A"
           }
         ],
@@ -532,7 +532,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.apex_execution_events WHERE $__timeFilter(timestamp) AND quiddity = 'X'",
+            "rawSql": "SELECT count() as n FROM apex_execution_events WHERE $__timeFilter(timestamp) AND quiddity = 'X'",
             "refId": "A"
           }
         ],
@@ -607,7 +607,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.login_events l JOIN salesforceProd.users u ON l.user_id=u.id WHERE $__timeFilter(l.timestamp) AND u.is_active=0 AND l.login_status='LOGIN_NO_ERROR'",
+            "rawSql": "SELECT count() as n FROM login_events l JOIN users u ON l.user_id=u.id WHERE $__timeFilter(l.timestamp) AND u.is_active=0 AND l.login_status='LOGIN_NO_ERROR'",
             "refId": "A"
           }
         ],
@@ -678,7 +678,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.package_install_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() as n FROM package_install_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -757,7 +757,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.insufficient_access_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() as n FROM insufficient_access_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -828,7 +828,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as n FROM salesforceProd.permission_update_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() as n FROM permission_update_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -913,7 +913,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as calls FROM (SELECT timestamp FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp) UNION ALL SELECT timestamp FROM salesforceProd.api_events WHERE $__timeFilter(timestamp)) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as calls FROM (SELECT timestamp FROM rest_api_events WHERE $__timeFilter(timestamp) UNION ALL SELECT timestamp FROM api_events WHERE $__timeFilter(timestamp)) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -985,7 +985,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as exports FROM salesforceProd.report_export_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as exports FROM report_export_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1057,7 +1057,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as views FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as views FROM uri_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1129,7 +1129,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, countIf(login_status='LOGIN_NO_ERROR') as logins FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, countIf(login_status='LOGIN_NO_ERROR') as logins FROM login_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1209,7 +1209,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as failed FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND login_status!='LOGIN_NO_ERROR' GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as failed FROM login_events WHERE $__timeFilter(timestamp) AND login_status!='LOGIN_NO_ERROR' GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1289,7 +1289,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as login_as FROM salesforceProd.login_as_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as login_as FROM login_as_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1385,7 +1385,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT browser_type as browser, count() as logins FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND browser_type!='' GROUP BY browser ORDER BY logins DESC LIMIT 15",
+            "rawSql": "SELECT browser_type as browser, count() as logins FROM login_events WHERE $__timeFilter(timestamp) AND browser_type!='' GROUP BY browser ORDER BY logins DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -1446,7 +1446,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT client_ip, count() as logins, count(DISTINCT login_key) as unique_sessions FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND client_ip!='' GROUP BY client_ip ORDER BY logins DESC LIMIT 20",
+            "rawSql": "SELECT client_ip, count() as logins, count(DISTINCT login_key) as unique_sessions FROM login_events WHERE $__timeFilter(timestamp) AND client_ip!='' GROUP BY client_ip ORDER BY logins DESC LIMIT 20",
             "refId": "A"
           }
         ],
@@ -1522,7 +1522,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, countIf(login_status='LOGIN_NO_ERROR') as successful, countIf(login_status!='LOGIN_NO_ERROR') as failed FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, countIf(login_status='LOGIN_NO_ERROR') as successful, countIf(login_status!='LOGIN_NO_ERROR') as failed FROM login_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1605,7 +1605,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT if(api_type='','Browser/UI',api_type) as api_type, count() as logins FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) GROUP BY api_type ORDER BY logins DESC LIMIT 15",
+            "rawSql": "SELECT if(api_type='','Browser/UI',api_type) as api_type, count() as logins FROM login_events WHERE $__timeFilter(timestamp) GROUP BY api_type ORDER BY logins DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -1671,7 +1671,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS username, user_id as user_identifier, login_status, browser_type, client_ip, login_type FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND ('${full_name}'='All' OR user_name='${full_name}') AND ('${user_id}'='All' OR user_id='${user_id}') ORDER BY timestamp DESC LIMIT 50",
+            "rawSql": "SELECT timestamp, dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS username, user_id as user_identifier, login_status, browser_type, client_ip, login_type FROM login_events WHERE $__timeFilter(timestamp) AND ('${full_name}'='All' OR user_name='${full_name}') AND ('${user_id}'='All' OR user_id='${user_id}') ORDER BY timestamp DESC LIMIT 50",
             "refId": "A"
           }
         ],
@@ -1732,7 +1732,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT dictGetOrDefault('salesforceProd.user_lookup', 'username', delegated_user_id, delegated_user_name) AS impersonated_user, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS impersonated_by, count() as times, max(timestamp) as last_seen FROM salesforceProd.login_as_events WHERE $__timeFilter(timestamp) GROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
+            "rawSql": "SELECT dictGetOrDefault('user_lookup', 'username', delegated_user_id, delegated_user_name) AS impersonated_user, dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS impersonated_by, count() as times, max(timestamp) as last_seen FROM login_as_events WHERE $__timeFilter(timestamp) GROUP BY delegated_user_name, user_name ORDER BY times DESC LIMIT 20",
             "refId": "A"
           }
         ],
@@ -1808,7 +1808,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as impersonations FROM salesforceProd.login_as_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as impersonations FROM login_as_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -1875,7 +1875,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT extract(uri,'/lightning/o/([^/?#]+)') as object_type, count() as accesses FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) AND match(uri,'/lightning/o/') AND extract(uri,'/lightning/o/([^/?#]+)')!='' GROUP BY object_type ORDER BY accesses DESC LIMIT 15",
+            "rawSql": "SELECT extract(uri,'/lightning/o/([^/?#]+)') as object_type, count() as accesses FROM uri_events WHERE $__timeFilter(timestamp) AND match(uri,'/lightning/o/') AND extract(uri,'/lightning/o/([^/?#]+)')!='' GROUP BY object_type ORDER BY accesses DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -1929,7 +1929,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT uri, count() as hits FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY uri ORDER BY hits DESC LIMIT 15",
+            "rawSql": "SELECT uri, count() as hits FROM uri_events WHERE $__timeFilter(timestamp) GROUP BY uri ORDER BY hits DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -1983,7 +1983,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT extract(uri,'/lightning/r/([^/]+)/') as record_type, count() as accesses FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) AND match(uri,'/lightning/r/') AND extract(uri,'/lightning/r/([^/]+)/')!='' GROUP BY record_type ORDER BY accesses DESC LIMIT 15",
+            "rawSql": "SELECT extract(uri,'/lightning/r/([^/]+)/') as record_type, count() as accesses FROM uri_events WHERE $__timeFilter(timestamp) AND match(uri,'/lightning/r/') AND extract(uri,'/lightning/r/([^/]+)/')!='' GROUP BY record_type ORDER BY accesses DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -2062,7 +2062,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT uri as resource, method, 'REST' as api_type, user_agent as client_name, count() as row_count\nFROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\nGROUP BY resource, method, client_name\nUNION ALL\nSELECT entity_name as resource, method_name as method, 'SOAP' as api_type, '' as client_name, count() as row_count\nFROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\nGROUP BY resource, method, client_name\nORDER BY row_count DESC LIMIT 50",
+            "rawSql": "SELECT uri as resource, method, 'REST' as api_type, user_agent as client_name, count() as row_count\nFROM rest_api_events WHERE $__timeFilter(timestamp)\nGROUP BY resource, method, client_name\nUNION ALL\nSELECT entity_name as resource, method_name as method, 'SOAP' as api_type, '' as client_name, count() as row_count\nFROM api_events WHERE $__timeFilter(timestamp)\nGROUP BY resource, method, client_name\nORDER BY row_count DESC LIMIT 50",
             "refId": "A"
           }
         ],
@@ -2116,7 +2116,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT user_agent as client_name, count() as calls FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp) AND user_agent!='' GROUP BY client_name ORDER BY calls DESC LIMIT 15",
+            "rawSql": "SELECT user_agent as client_name, count() as calls FROM rest_api_events WHERE $__timeFilter(timestamp) AND user_agent!='' GROUP BY client_name ORDER BY calls DESC LIMIT 15",
             "refId": "A"
           }
         ],
@@ -2192,7 +2192,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, 'REST' as api_type, count() as calls\nFROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\nGROUP BY t, api_type\nUNION ALL\nSELECT toStartOfDay(timestamp) as t, 'SOAP' as api_type, count() as calls\nFROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\nGROUP BY t, api_type\nORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, 'REST' as api_type, count() as calls\nFROM rest_api_events WHERE $__timeFilter(timestamp)\nGROUP BY t, api_type\nUNION ALL\nSELECT toStartOfDay(timestamp) as t, 'SOAP' as api_type, count() as calls\nFROM api_events WHERE $__timeFilter(timestamp)\nGROUP BY t, api_type\nORDER BY t",
             "refId": "A"
           }
         ],
@@ -2220,14 +2220,14 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "cfgz0zrjwhudcc"
           },
-          "definition": "SELECT DISTINCT user_name FROM salesforceProd.login_events WHERE user_name != '' ORDER BY user_name LIMIT 500",
+          "definition": "SELECT DISTINCT user_name FROM login_events WHERE user_name != '' ORDER BY user_name LIMIT 500",
           "hide": 0,
           "includeAll": true,
           "label": "Full Name",
           "multi": false,
           "name": "full_name",
           "options": [],
-          "query": "SELECT DISTINCT username FROM salesforceProd.users WHERE username != '' AND is_active = 1 ORDER BY username LIMIT 500",
+          "query": "SELECT DISTINCT username FROM users WHERE username != '' AND is_active = 1 ORDER BY username LIMIT 500",
           "refresh": 2,
           "regex": "",
           "sort": 1,
@@ -2244,14 +2244,14 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "cfgz0zrjwhudcc"
           },
-          "definition": "SELECT DISTINCT user_id FROM salesforceProd.login_events WHERE ('${full_name}'='All' OR user_name='${full_name}') AND user_id!='' LIMIT 500",
+          "definition": "SELECT DISTINCT user_id FROM login_events WHERE ('${full_name}'='All' OR user_name='${full_name}') AND user_id!='' LIMIT 500",
           "hide": 0,
           "includeAll": true,
           "label": "User ID",
           "multi": false,
           "name": "user_id",
           "options": [],
-          "query": "SELECT DISTINCT user_id FROM salesforceProd.login_events WHERE ('${full_name}'='All' OR user_name='${full_name}') AND user_id!='' LIMIT 500",
+          "query": "SELECT DISTINCT user_id FROM login_events WHERE ('${full_name}'='All' OR user_name='${full_name}') AND user_id!='' LIMIT 500",
           "refresh": 2,
           "regex": "",
           "sort": 1,

@@ -65,7 +65,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT count() as page_views FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() as page_views FROM uri_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -137,7 +137,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT round(avg(run_time_ns)/1000000, 1) as avg_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT round(avg(run_time_ns)/1000000, 1) as avg_ms FROM uri_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -217,7 +217,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms FROM uri_events WHERE $__timeFilter(timestamp)",
             "refId": "A"
           }
         ],
@@ -293,7 +293,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  round(quantile(0.50)(run_time_ns)/1000000, 1) as p50_ms,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(quantile(0.99)(run_time_ns)/1000000, 1) as p99_ms\nFROM salesforceProd.uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  round(quantile(0.50)(run_time_ns)/1000000, 1) as p50_ms,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(quantile(0.99)(run_time_ns)/1000000, 1) as p99_ms\nFROM uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -420,7 +420,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT uri,\n  count() as hits,\n  round(quantile(0.50)(run_time_ns)/1000000, 1) as p50_ms,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(quantile(0.99)(run_time_ns)/1000000, 1) as p99_ms\nFROM salesforceProd.uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY p95_ms DESC LIMIT 25",
+            "rawSql": "SELECT uri,\n  count() as hits,\n  round(quantile(0.50)(run_time_ns)/1000000, 1) as p50_ms,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(quantile(0.99)(run_time_ns)/1000000, 1) as p99_ms\nFROM uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY p95_ms DESC LIMIT 25",
             "refId": "A"
           }
         ],
@@ -499,7 +499,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT uri,\n  count() as hits,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms,\n  countIf(run_time_ns > 3000000000) as slow_count\nFROM salesforceProd.uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY hits DESC LIMIT 25",
+            "rawSql": "SELECT uri,\n  count() as hits,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms,\n  countIf(run_time_ns > 3000000000) as slow_count\nFROM uri_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY hits DESC LIMIT 25",
             "refId": "A"
           }
         ],
@@ -582,7 +582,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT browser_type, count() as requests\nFROM salesforceProd.uri_events\nWHERE $__timeFilter(timestamp) AND browser_type != ''\nGROUP BY browser_type ORDER BY requests DESC LIMIT 15",
+            "rawSql": "SELECT browser_type, count() as requests\nFROM uri_events\nWHERE $__timeFilter(timestamp) AND browser_type != ''\nGROUP BY browser_type ORDER BY requests DESC LIMIT 15",
             "refId": "A"
           }
         ],

@@ -353,3 +353,20 @@ CREATE TABLE IF NOT EXISTS salesforceProd.users
 )
 ENGINE = ReplacingMergeTree(synced_at)
 ORDER BY id;
+
+-- ---------------------------------------------------------------------------
+-- connected_app_registry  (manually maintained; loaded by schema/load_registry.py)
+-- Maps connected app IDs to human-readable names and optional category/notes.
+-- Uses SharedReplacingMergeTree so re-running load_registry.py is idempotent.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.connected_app_registry
+(
+    connected_app_id  String,
+    app_name          String,
+    category          String DEFAULT '',
+    notes             String DEFAULT '',
+    updated_date      Date   DEFAULT today()
+)
+ENGINE = SharedReplacingMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}', updated_date)
+ORDER BY connected_app_id
+SETTINGS index_granularity = 8192;

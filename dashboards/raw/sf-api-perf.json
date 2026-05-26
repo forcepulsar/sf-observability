@@ -43,7 +43,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT api_family, sum(calls) as calls FROM (\n  SELECT 'REST' as api_family, count() as calls FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'SOAP', count() FROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM salesforceProd.bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM salesforceProd.bulk_api2_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'ApexREST', count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY api_family ORDER BY calls DESC",
+          "rawSql": "SELECT api_family, sum(calls) as calls FROM (\n  SELECT 'REST' as api_family, count() as calls FROM rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'SOAP', count() FROM api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'BULK_API', count() FROM bulk_api2_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT 'ApexREST', count() FROM apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY api_family ORDER BY calls DESC",
           "refId": "A"
         }
       ],
@@ -93,7 +93,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT method, count() as calls FROM (\n  SELECT method FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT method FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY method ORDER BY calls DESC",
+          "rawSql": "SELECT method, count() as calls FROM (\n  SELECT method FROM rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL SELECT method FROM apex_callout_events WHERE $__timeFilter(timestamp)\n) GROUP BY method ORDER BY calls DESC",
           "refId": "A"
         }
       ],
@@ -143,7 +143,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT uri, count() as calls FROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY calls DESC LIMIT 10",
+          "rawSql": "SELECT uri, count() as calls FROM rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri ORDER BY calls DESC LIMIT 10",
           "refId": "A"
         }
       ],
@@ -219,7 +219,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT user_agent as client, count() as calls\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND user_agent != ''\nGROUP BY client ORDER BY calls DESC LIMIT 15",
+          "rawSql": "SELECT user_agent as client, count() as calls\nFROM rest_api_events\nWHERE $__timeFilter(timestamp) AND user_agent != ''\nGROUP BY client ORDER BY calls DESC LIMIT 15",
           "refId": "A"
         }
       ],
@@ -312,7 +312,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfHour(timestamp) as t, 'REST' as family, count() as failed\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nGROUP BY t, family\nUNION ALL\nSELECT toStartOfHour(timestamp), 'SOAP', count()\nFROM salesforceProd.api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t, family\nORDER BY t",
+          "rawSql": "SELECT toStartOfHour(timestamp) as t, 'REST' as family, count() as failed\nFROM rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nGROUP BY t, family\nUNION ALL\nSELECT toStartOfHour(timestamp), 'SOAP', count()\nFROM api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t, family\nORDER BY t",
           "refId": "A"
         }
       ],
@@ -412,7 +412,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT timestamp, user_agent as client_name, 'REST' as api_family, method as http_method, uri as api_resource, status_code\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nORDER BY timestamp DESC LIMIT 50",
+          "rawSql": "SELECT timestamp, user_agent as client_name, 'REST' as api_family, method as http_method, uri as api_resource, status_code\nFROM rest_api_events\nWHERE $__timeFilter(timestamp) AND status_code >= 400\nORDER BY timestamp DESC LIMIT 50",
           "refId": "A"
         }
       ],
@@ -558,7 +558,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  round(avg(cpu_time_ns)/1000000, 2) as avg_cpu_ms,\n  round(avg(run_time_ns)/1000000, 2) as avg_run_ms,\n  count() as request_count\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
+          "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  round(avg(cpu_time_ns)/1000000, 2) as avg_cpu_ms,\n  round(avg(run_time_ns)/1000000, 2) as avg_run_ms,\n  count() as request_count\nFROM rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
           "refId": "A"
         }
       ],

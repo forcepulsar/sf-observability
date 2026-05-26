@@ -47,7 +47,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT dateDiff('minute', max(ended_at), now()) AS minutes_since_last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "rawSql": "SELECT dateDiff('minute', max(ended_at), now()) AS minutes_since_last_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
@@ -82,7 +82,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 21600)) * 1000 AS next_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 21600)) * 1000 AS next_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
@@ -117,7 +117,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
@@ -152,7 +152,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM salesforceProd.ingestion_runs WHERE script = 'ingest_threat_store' AND status IN ('success','partial')",
+          "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM ingestion_runs WHERE script = 'ingest_threat_store' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
@@ -175,7 +175,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT sum(rows_total) AS total FROM salesforceProd.ingestion_runs WHERE status IN ('success','partial')",
+          "rawSql": "SELECT sum(rows_total) AS total FROM ingestion_runs WHERE status IN ('success','partial')",
           "format": "table"
         }
       ]
@@ -206,7 +206,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT dateDiff('minute', max(started_at), now()) AS minutes_since_last_file FROM salesforceProd.ingestion_events",
+          "rawSql": "SELECT dateDiff('minute', max(started_at), now()) AS minutes_since_last_file FROM ingestion_events",
           "format": "table"
         }
       ]
@@ -227,7 +227,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT rows_total FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "rawSql": "SELECT rows_total FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
@@ -248,7 +248,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT round(duration_ms / 60000, 1) AS minutes FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "rawSql": "SELECT round(duration_ms / 60000, 1) AS minutes FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
@@ -281,7 +281,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT errors FROM salesforceProd.ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
+          "rawSql": "SELECT errors FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
@@ -311,7 +311,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT started_at, rows_total, script FROM salesforceProd.ingestion_runs WHERE $__timeFilter(started_at) ORDER BY started_at ASC",
+          "rawSql": "SELECT started_at, rows_total, script FROM ingestion_runs WHERE $__timeFilter(started_at) ORDER BY started_at ASC",
           "format": "table"
         }
       ]
@@ -377,7 +377,7 @@
       "targets": [
         {
           "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT script, started_at, ended_at, duration_ms, files_total, rows_total, errors, status FROM salesforceProd.ingestion_runs ORDER BY started_at DESC LIMIT 30",
+          "rawSql": "SELECT script, started_at, ended_at, duration_ms, files_total, rows_total, errors, status FROM ingestion_runs ORDER BY started_at DESC LIMIT 30",
           "format": "table"
         }
       ]

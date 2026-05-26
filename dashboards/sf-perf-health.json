@@ -105,7 +105,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  page_url AS \"Page URL\",\n  count() AS \"Loads\",\n  round(avg(effective_page_time_ms)) AS \"Avg Load Time (ms)\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY page_url\nORDER BY \"Avg Load Time (ms)\" DESC\nLIMIT 5",
+            "rawSql": "SELECT\n  page_url AS \"Page URL\",\n  count() AS \"Loads\",\n  round(avg(effective_page_time_ms)) AS \"Avg Load Time (ms)\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY page_url\nORDER BY \"Avg Load Time (ms)\" DESC\nLIMIT 5",
             "format": 1
           }
         ]
@@ -184,7 +184,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  entry_point AS \"Entry Point\",\n  count() AS \"Executions\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\n  AND entry_point != ''\nGROUP BY entry_point\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
+            "rawSql": "SELECT\n  entry_point AS \"Entry Point\",\n  count() AS \"Executions\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM apex_execution_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\n  AND entry_point != ''\nGROUP BY entry_point\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
             "format": 1
           }
         ]
@@ -263,7 +263,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  uri AS \"URI\",\n  count() AS \"Calls\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\nGROUP BY uri\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
+            "rawSql": "SELECT\n  uri AS \"URI\",\n  count() AS \"Calls\",\n  round(avg(run_time_ns)) AS \"Avg Run Time (ms)\"\nFROM rest_api_events\nWHERE $__timeFilter(timestamp)\n  AND run_time_ns > 0\nGROUP BY uri\nORDER BY \"Avg Run Time (ms)\" DESC\nLIMIT 5",
             "format": 1
           }
         ]
@@ -337,7 +337,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.login_events WHERE $__timeFilter(timestamp) AND login_status != 'LOGIN_NO_ERROR'",
+            "rawSql": "SELECT count() FROM login_events WHERE $__timeFilter(timestamp) AND login_status != 'LOGIN_NO_ERROR'",
             "format": 1
           }
         ]
@@ -391,7 +391,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.login_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM login_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -453,7 +453,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) AND status_code >= 400 AND counts_against_api_limit = 1",
+            "rawSql": "SELECT count() FROM api_total_usage_events WHERE $__timeFilter(timestamp) AND status_code >= 400 AND counts_against_api_limit = 1",
             "format": 1
           }
         ]
@@ -507,7 +507,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable API Calls\" FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable API Calls\" FROM api_total_usage_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -569,7 +569,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp) AND status_code >= 400",
+            "rawSql": "SELECT count() FROM apex_callout_events WHERE $__timeFilter(timestamp) AND status_code >= 400",
             "format": 1
           }
         ]
@@ -623,7 +623,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.apex_callout_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM apex_callout_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -685,7 +685,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM apex_exception_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -739,7 +739,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.apex_execution_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM apex_execution_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -801,7 +801,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT sum(error_count) FROM salesforceProd.flow_nav_metric_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT sum(error_count) FROM flow_nav_metric_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -855,7 +855,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.flow_nav_metric_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM flow_nav_metric_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -917,7 +917,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 10000",
+            "rawSql": "SELECT count() FROM lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 10000",
             "format": 1
           }
         ]
@@ -971,7 +971,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT count() FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp)",
+            "rawSql": "SELECT count() FROM lightning_page_view_events WHERE $__timeFilter(timestamp)",
             "format": 1
           }
         ]
@@ -1027,7 +1027,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(effective_page_time_ms)) AS \"Avg\",\n  round(quantile(0.95)(effective_page_time_ms)) AS \"P95\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(effective_page_time_ms)) AS \"Avg\",\n  round(quantile(0.95)(effective_page_time_ms)) AS \"P95\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp)\n  AND effective_page_time_ms > 0\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1071,7 +1071,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Total Loads\",\n  countIf(effective_page_time_ms > 10000) AS \"Slow (>10s)\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Total Loads\",\n  countIf(effective_page_time_ms > 10000) AS \"Slow (>10s)\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1107,7 +1107,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT app_name AS \"App\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND app_name != ''\nGROUP BY app_name\nORDER BY \"Loads\" DESC\nLIMIT 10",
+            "rawSql": "SELECT app_name AS \"App\", count() AS \"Loads\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND app_name != ''\nGROUP BY app_name\nORDER BY \"Loads\" DESC\nLIMIT 10",
             "format": 1
           }
         ]
@@ -1143,7 +1143,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT browser_name AS \"Browser\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND browser_name != ''\nGROUP BY browser_name\nORDER BY \"Loads\" DESC",
+            "rawSql": "SELECT browser_name AS \"Browser\", count() AS \"Loads\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND browser_name != ''\nGROUP BY browser_name\nORDER BY \"Loads\" DESC",
             "format": 1
           }
         ]
@@ -1179,7 +1179,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT device_platform AS \"Device\", count() AS \"Loads\"\nFROM salesforceProd.lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND device_platform != ''\nGROUP BY device_platform\nORDER BY \"Loads\" DESC",
+            "rawSql": "SELECT device_platform AS \"Device\", count() AS \"Loads\"\nFROM lightning_page_view_events\nWHERE $__timeFilter(timestamp) AND device_platform != ''\nGROUP BY device_platform\nORDER BY \"Loads\" DESC",
             "format": 1
           }
         ]
@@ -1234,7 +1234,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\"\nFROM apex_execution_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           },
           {
@@ -1242,7 +1242,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Errors\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Errors\"\nFROM apex_exception_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1285,7 +1285,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(run_time_ns)) AS \"Avg\",\n  round(quantile(0.95)(run_time_ns)) AS \"P95\"\nFROM salesforceProd.apex_execution_events\nWHERE $__timeFilter(timestamp) AND run_time_ns > 0\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(avg(run_time_ns)) AS \"Avg\",\n  round(quantile(0.95)(run_time_ns)) AS \"P95\"\nFROM apex_execution_events\nWHERE $__timeFilter(timestamp) AND run_time_ns > 0\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1319,7 +1319,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  timestamp AS \"Time\",\n  dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS \"User\",\n  class_name AS \"Class\",\n  method_name AS \"Method\",\n  exception_type AS \"Exception\",\n  exception_message AS \"Message\"\nFROM salesforceProd.apex_exception_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
+            "rawSql": "SELECT\n  timestamp AS \"Time\",\n  dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS \"User\",\n  class_name AS \"Class\",\n  method_name AS \"Method\",\n  exception_type AS \"Exception\",\n  exception_message AS \"Message\"\nFROM apex_exception_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC\nLIMIT 100",
             "format": 1
           }
         ]
@@ -1374,7 +1374,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  api_family AS \"API Family\",\n  count() AS \"Calls\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_family != '' AND counts_against_api_limit = 1\nGROUP BY time, api_family\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  api_family AS \"API Family\",\n  count() AS \"Calls\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_family != '' AND counts_against_api_limit = 1\nGROUP BY time, api_family\nORDER BY time",
             "format": 0
           }
         ]
@@ -1417,7 +1417,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(countIf(status_code >= 400) / count(), 4) AS \"Error Rate\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  round(countIf(status_code >= 400) / count(), 4) AS \"Error Rate\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1457,7 +1457,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(unknown)') AS \"App / Client\",\n  user_name AS \"User\",\n  count() AS \"Total Calls\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"App / Client\", user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 25",
+            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(unknown)') AS \"App / Client\",\n  user_name AS \"User\",\n  count() AS \"Total Calls\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"App / Client\", user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 25",
             "format": 1
           }
         ]
@@ -1510,7 +1510,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  api_resource AS \"Resource\",\n  count() AS \"Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_resource != ''\nGROUP BY api_resource\nORDER BY \"Errors\" DESC\nLIMIT 20",
+            "rawSql": "SELECT\n  api_resource AS \"Resource\",\n  count() AS \"Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp) AND api_resource != ''\nGROUP BY api_resource\nORDER BY \"Errors\" DESC\nLIMIT 20",
             "format": 1
           }
         ]
@@ -1565,7 +1565,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\",\n  sum(error_count) AS \"Errors\"\nFROM salesforceProd.flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  count() AS \"Executions\",\n  sum(error_count) AS \"Errors\"\nFROM flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -1640,7 +1640,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  flow_version_id AS \"Flow Version\",\n  count() AS \"Runs\",\n  sum(error_count) AS \"Errors\",\n  round(avg(total_execution_time_ms)) AS \"Avg Execution Time (ms)\"\nFROM salesforceProd.flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY flow_version_id\nORDER BY \"Avg Execution Time (ms)\" DESC\nLIMIT 5",
+            "rawSql": "SELECT\n  flow_version_id AS \"Flow Version\",\n  count() AS \"Runs\",\n  sum(error_count) AS \"Errors\",\n  round(avg(total_execution_time_ms)) AS \"Avg Execution Time (ms)\"\nFROM flow_nav_metric_events\nWHERE $__timeFilter(timestamp)\nGROUP BY flow_version_id\nORDER BY \"Avg Execution Time (ms)\" DESC\nLIMIT 5",
             "format": 1
           }
         ]
@@ -1692,7 +1692,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS \"Category\", count() AS \"Count\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY \"Category\" ORDER BY \"Count\" DESC",
+            "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS \"Category\", count() AS \"Count\" FROM apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY \"Category\" ORDER BY \"Count\" DESC",
             "format": 1
           }
         ]
@@ -1736,7 +1736,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT $__timeInterval(timestamp) AS time, multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS category, count() AS cnt FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time, category ORDER BY time",
+            "rawSql": "SELECT $__timeInterval(timestamp) AS time, multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', 'Other') AS category, count() AS cnt FROM apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time, category ORDER BY time",
             "format": 0
           }
         ]
@@ -1790,7 +1790,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT e.timestamp AS \"Time\", dictGetOrDefault('salesforceProd.user_lookup', 'username', e.user_id, e.user_name) AS \"User\", e.entry_point AS \"Entry Point\", e.run_time_ns AS \"Run Time (ms)\", ex.exception_type AS \"Exception Type\", left(ex.exception_message, 120) AS \"Message\" FROM salesforceProd.apex_execution_events e INNER JOIN salesforceProd.apex_exception_events ex ON e.request_id = ex.request_id AND toDate(e.timestamp) = toDate(ex.timestamp) WHERE $__timeFilter(e.timestamp) ORDER BY e.run_time_ns DESC LIMIT 50",
+            "rawSql": "SELECT e.timestamp AS \"Time\", dictGetOrDefault('user_lookup', 'username', e.user_id, e.user_name) AS \"User\", e.entry_point AS \"Entry Point\", e.run_time_ns AS \"Run Time (ms)\", ex.exception_type AS \"Exception Type\", left(ex.exception_message, 120) AS \"Message\" FROM apex_execution_events e INNER JOIN apex_exception_events ex ON e.request_id = ex.request_id AND toDate(e.timestamp) = toDate(ex.timestamp) WHERE $__timeFilter(e.timestamp) ORDER BY e.run_time_ns DESC LIMIT 50",
             "format": 1
           }
         ]
@@ -1869,7 +1869,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / 1000.0 / 3600.0, 1) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+            "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / 1000.0 / 3600.0, 1) AS n FROM lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
             "format": 1
           }
         ]
@@ -1935,7 +1935,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT uniq(user_id) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+            "rawSql": "SELECT uniq(user_id) AS n FROM lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
             "format": 1
           }
         ]
@@ -2001,7 +2001,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / uniq(user_id)) AS n FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
+            "rawSql": "SELECT round(sum(greatest(effective_page_time_ms - 3000, 0)) / uniq(user_id)) AS n FROM lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 3000",
             "format": 1
           }
         ]
@@ -2075,7 +2075,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', NULL) AS \"Contention Type\", count() AS \"Count\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) AND \"Contention Type\" IS NOT NULL GROUP BY \"Contention Type\" ORDER BY \"Count\" DESC",
+            "rawSql": "SELECT multiIf(exception_message LIKE '%CPU time limit%', 'CPU Timeout', exception_message LIKE '%Too many DML statements%', 'DML Limit', exception_message LIKE '%Too many query rows%', 'Too Many Rows', exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock', exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit', exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%', 'Callout Timeout', exception_message LIKE '%heap size%', 'Heap Limit', exception_message LIKE '%LimitException%', 'Other Limit', NULL) AS \"Contention Type\", count() AS \"Count\" FROM apex_exception_events WHERE $__timeFilter(timestamp) AND \"Contention Type\" IS NOT NULL GROUP BY \"Contention Type\" ORDER BY \"Count\" DESC",
             "format": 1
           }
         ]
@@ -2120,7 +2120,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT $__timeInterval(timestamp) AS time, countIf(exception_message LIKE '%CPU time limit%' OR exception_message LIKE '%Too many DML statements%' OR exception_message LIKE '%Too many query rows%' OR exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%Too many SOQL queries%' OR exception_message LIKE '%CalloutException%' OR exception_message LIKE '%heap size%' OR exception_message LIKE '%LimitException%') AS \"Contention Score\" FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
+            "rawSql": "SELECT $__timeInterval(timestamp) AS time, countIf(exception_message LIKE '%CPU time limit%' OR exception_message LIKE '%Too many DML statements%' OR exception_message LIKE '%Too many query rows%' OR exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%Too many SOQL queries%' OR exception_message LIKE '%CalloutException%' OR exception_message LIKE '%heap size%' OR exception_message LIKE '%LimitException%') AS \"Contention Score\" FROM apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
             "format": 0
           }
         ]
@@ -2200,7 +2200,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(effective_page_time_ms)) AS \"Current Avg\", (SELECT round(avg(effective_page_time_ms)) FROM salesforceProd.lightning_page_view_events WHERE timestamp >= now() - INTERVAL 30 DAY AND effective_page_time_ms > 0) AS \"30-day Avg\" FROM salesforceProd.lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 0 GROUP BY time ORDER BY time",
+            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(effective_page_time_ms)) AS \"Current Avg\", (SELECT round(avg(effective_page_time_ms)) FROM lightning_page_view_events WHERE timestamp >= now() - INTERVAL 30 DAY AND effective_page_time_ms > 0) AS \"30-day Avg\" FROM lightning_page_view_events WHERE $__timeFilter(timestamp) AND effective_page_time_ms > 0 GROUP BY time ORDER BY time",
             "format": 0
           }
         ]
@@ -2267,7 +2267,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(run_time_ns)) AS \"Current Avg\", (SELECT round(avg(run_time_ns)) FROM salesforceProd.apex_execution_events WHERE timestamp >= now() - INTERVAL 30 DAY AND run_time_ns > 0) AS \"30-day Avg\" FROM salesforceProd.apex_execution_events WHERE $__timeFilter(timestamp) AND run_time_ns > 0 GROUP BY time ORDER BY time",
+            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(avg(run_time_ns)) AS \"Current Avg\", (SELECT round(avg(run_time_ns)) FROM apex_execution_events WHERE timestamp >= now() - INTERVAL 30 DAY AND run_time_ns > 0) AS \"30-day Avg\" FROM apex_execution_events WHERE $__timeFilter(timestamp) AND run_time_ns > 0 GROUP BY time ORDER BY time",
             "format": 0
           }
         ]
@@ -2334,7 +2334,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(countIf(status_code >= 400) / count(), 4) AS \"Current Error Rate\", (SELECT round(countIf(status_code >= 400) / count(), 4) FROM salesforceProd.api_total_usage_events WHERE timestamp >= now() - INTERVAL 30 DAY) AS \"30-day Avg\" FROM salesforceProd.api_total_usage_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
+            "rawSql": "SELECT $__timeInterval(timestamp) AS time, round(countIf(status_code >= 400) / count(), 4) AS \"Current Error Rate\", (SELECT round(countIf(status_code >= 400) / count(), 4) FROM api_total_usage_events WHERE timestamp >= now() - INTERVAL 30 DAY) AS \"30-day Avg\" FROM api_total_usage_events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
             "format": 0
           }
         ]
@@ -2409,7 +2409,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable Calls (Last 24h)\"\nFROM salesforceProd.api_total_usage_events\nWHERE timestamp >= now() - INTERVAL 24 HOUR",
+            "rawSql": "SELECT countIf(counts_against_api_limit = 1) AS \"Billable Calls (Last 24h)\"\nFROM api_total_usage_events\nWHERE timestamp >= now() - INTERVAL 24 HOUR",
             "format": 1
           }
         ]
@@ -2452,7 +2452,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  countIf(counts_against_api_limit = 1) AS \"Counts Toward Limit\",\n  countIf(counts_against_api_limit = 0) AS \"Does Not Count\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
+            "rawSql": "SELECT\n  $__timeInterval(timestamp) AS time,\n  countIf(counts_against_api_limit = 1) AS \"Counts Toward Limit\",\n  countIf(counts_against_api_limit = 0) AS \"Does Not Count\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY time\nORDER BY time",
             "format": 0
           }
         ]
@@ -2492,7 +2492,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  user_name AS \"User\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\",\n  groupUniqArrayIf(5)(COALESCE(NULLIF(connected_app_name,''), NULLIF(connected_app_id,''), client_name), connected_app_id != '' OR client_name != '') AS \"Apps Used\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\n  AND user_name != ''\nGROUP BY user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
+            "rawSql": "SELECT\n  user_name AS \"User\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\",\n  groupUniqArrayIf(5)(COALESCE(NULLIF(connected_app_name,''), NULLIF(connected_app_id,''), client_name), connected_app_id != '' OR client_name != '') AS \"Apps Used\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp)\n  AND user_name != ''\nGROUP BY user_name\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
             "format": 1
           }
         ]
@@ -2532,7 +2532,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(platform / unnamed)') AS \"Connected App\",\n  api_client_category AS \"Category\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM salesforceProd.api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"Connected App\", api_client_category\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
+            "rawSql": "SELECT\n  COALESCE(NULLIF(connected_app_name, ''), NULLIF(connected_app_id, ''), NULLIF(client_name, ''), '(platform / unnamed)') AS \"Connected App\",\n  api_client_category AS \"Category\",\n  countIf(counts_against_api_limit = 1) AS \"Billable Calls\",\n  count() AS \"Total Calls\",\n  countIf(status_code >= 400) AS \"Errors\",\n  round(100 * countIf(status_code >= 400) / count(), 1) AS \"Error %\"\nFROM api_total_usage_events\nWHERE $__timeFilter(timestamp)\nGROUP BY \"Connected App\", api_client_category\nORDER BY \"Billable Calls\" DESC\nLIMIT 20",
             "format": 1
           }
         ]
@@ -2602,7 +2602,7 @@
               "type": "grafana-clickhouse-datasource",
               "uid": "cfgz0zrjwhudcc"
             },
-            "rawSql": "SELECT\n    t.connected_app_id AS \"App ID (unregistered)\",\n    count() AS \"Total Calls\",\n    countIf(t.counts_against_api_limit = 1) AS \"Billable Calls\",\n    uniq(t.user_name) AS \"Distinct Users\",\n    groupArray(3)(DISTINCT t.user_name) AS \"Sample Users\",\n    min(toDate(t.timestamp)) AS \"First Seen\",\n    max(toDate(t.timestamp)) AS \"Last Seen\",\n    groupArray(3)(DISTINCT t.client_ip) AS \"Sample IPs\"\nFROM salesforceProd.api_total_usage_events t FINAL\nLEFT JOIN salesforceProd.connected_app_registry r FINAL\n    ON t.connected_app_id = r.connected_app_id\nWHERE t.timestamp >= now() - INTERVAL 7 DAY\n  AND t.connected_app_id != ''\n  AND r.connected_app_id = ''\nGROUP BY t.connected_app_id\nORDER BY \"Billable Calls\" DESC",
+            "rawSql": "SELECT\n    t.connected_app_id AS \"App ID (unregistered)\",\n    count() AS \"Total Calls\",\n    countIf(t.counts_against_api_limit = 1) AS \"Billable Calls\",\n    uniq(t.user_name) AS \"Distinct Users\",\n    groupArray(3)(DISTINCT t.user_name) AS \"Sample Users\",\n    min(toDate(t.timestamp)) AS \"First Seen\",\n    max(toDate(t.timestamp)) AS \"Last Seen\",\n    groupArray(3)(DISTINCT t.client_ip) AS \"Sample IPs\"\nFROM api_total_usage_events t FINAL\nLEFT JOIN connected_app_registry r FINAL\n    ON t.connected_app_id = r.connected_app_id\nWHERE t.timestamp >= now() - INTERVAL 7 DAY\n  AND t.connected_app_id != ''\n  AND r.connected_app_id = ''\nGROUP BY t.connected_app_id\nORDER BY \"Billable Calls\" DESC",
             "format": 1
           }
         ]

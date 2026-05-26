@@ -33,7 +33,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfDay(timestamp) as t, event_type, count() as calls\nFROM (\n  SELECT timestamp, 'REST' as event_type FROM salesforceProd.rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'SOAP' as event_type FROM salesforceProd.api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v1' as event_type FROM salesforceProd.bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v2' as event_type FROM salesforceProd.bulk_api2_events WHERE $__timeFilter(timestamp)\n)\nGROUP BY t, event_type ORDER BY t",
+            "rawSql": "SELECT toStartOfDay(timestamp) as t, event_type, count() as calls\nFROM (\n  SELECT timestamp, 'REST' as event_type FROM rest_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'SOAP' as event_type FROM api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v1' as event_type FROM bulk_api_events WHERE $__timeFilter(timestamp)\n  UNION ALL\n  SELECT timestamp, 'Bulk v2' as event_type FROM bulk_api2_events WHERE $__timeFilter(timestamp)\n)\nGROUP BY t, event_type ORDER BY t",
             "refId": "A"
           }
         ],
@@ -72,7 +72,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "timeseries",
-            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  countIf(status_code >= 400) as errors,\n  countIf(status_code < 400) as success\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
+            "rawSql": "SELECT toStartOfHour(timestamp) as t,\n  countIf(status_code >= 400) as errors,\n  countIf(status_code < 400) as success\nFROM rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY t ORDER BY t",
             "refId": "A"
           }
         ],
@@ -111,7 +111,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT user_agent, count() as calls, countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY user_agent ORDER BY calls DESC LIMIT 20",
+            "rawSql": "SELECT user_agent, count() as calls, countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY user_agent ORDER BY calls DESC LIMIT 20",
             "refId": "A"
           }
         ],
@@ -150,7 +150,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name, operation, object_type, rows_processed, status\nFROM salesforceProd.bulk_api_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC LIMIT 50",
+            "rawSql": "SELECT timestamp, dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS user_name, operation, object_type, rows_processed, status\nFROM bulk_api_events\nWHERE $__timeFilter(timestamp)\nORDER BY timestamp DESC LIMIT 50",
             "refId": "A"
           }
         ],
@@ -189,7 +189,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT toString(status_code) as status, count() as calls\nFROM salesforceProd.apex_callout_events\nWHERE $__timeFilter(timestamp)\nGROUP BY status ORDER BY calls DESC",
+            "rawSql": "SELECT toString(status_code) as status, count() as calls\nFROM apex_callout_events\nWHERE $__timeFilter(timestamp)\nGROUP BY status ORDER BY calls DESC",
             "refId": "A"
           }
         ],
@@ -228,7 +228,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT named_credential_id, method, count() as calls,\n  countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.named_credential_events\nWHERE $__timeFilter(timestamp)\nGROUP BY named_credential_id, method ORDER BY calls DESC",
+            "rawSql": "SELECT named_credential_id, method, count() as calls,\n  countIf(status_code >= 400) as errors,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM named_credential_events\nWHERE $__timeFilter(timestamp)\nGROUP BY named_credential_id, method ORDER BY calls DESC",
             "refId": "A"
           }
         ],
@@ -267,7 +267,7 @@
             },
             "pluginVersion": "4.14.1",
             "queryType": "table",
-            "rawSql": "SELECT uri, method, count() as calls,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM salesforceProd.rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri, method ORDER BY p95_ms DESC LIMIT 20",
+            "rawSql": "SELECT uri, method, count() as calls,\n  round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms,\n  round(avg(run_time_ns)/1000000, 1) as avg_ms\nFROM rest_api_events\nWHERE $__timeFilter(timestamp)\nGROUP BY uri, method ORDER BY p95_ms DESC LIMIT 20",
             "refId": "A"
           }
         ],

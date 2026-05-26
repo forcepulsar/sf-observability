@@ -142,7 +142,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT\n      toStartOfHour(timestamp) AS time,\n      login_status,\n      count() AS logins\n  FROM salesforceProd.login_events\n  GROUP BY time, login_status\n  ORDER BY time",
+          "rawSql": "SELECT\n      toStartOfHour(timestamp) AS time,\n      login_status,\n      count() AS logins\n  FROM login_events\n  GROUP BY time, login_status\n  ORDER BY time",
           "refId": "A"
         }
       ],
@@ -221,7 +221,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT\n      dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name,\n      login_status,\n      count() AS attempts\n  FROM salesforceProd.login_events\n  WHERE login_status != 'LOGIN_NO_ERROR'\n    AND $__timeFilter(timestamp)\n  GROUP BY user_name, login_status\n  ORDER BY attempts DESC\n  LIMIT 20",
+          "rawSql": "SELECT\n      dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS user_name,\n      login_status,\n      count() AS attempts\n  FROM login_events\n  WHERE login_status != 'LOGIN_NO_ERROR'\n    AND $__timeFilter(timestamp)\n  GROUP BY user_name, login_status\n  ORDER BY attempts DESC\n  LIMIT 20",
           "refId": "A"
         }
       ],
@@ -294,7 +294,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT\n      client_ip,\n      count() AS logins,\n      countIf(login_status != 'LOGIN_NO_ERROR') AS failures\n  FROM salesforceProd.login_events\n  WHERE $__timeFilter(timestamp)\n  GROUP BY client_ip\n  ORDER BY logins DESC\n  LIMIT 20",
+          "rawSql": "SELECT\n      client_ip,\n      count() AS logins,\n      countIf(login_status != 'LOGIN_NO_ERROR') AS failures\n  FROM login_events\n  WHERE $__timeFilter(timestamp)\n  GROUP BY client_ip\n  ORDER BY logins DESC\n  LIMIT 20",
           "refId": "A"
         }
       ],
@@ -398,7 +398,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT\n      countIf(login_status = 'LOGIN_NO_ERROR') AS successful,\n      countIf(login_status != 'LOGIN_NO_ERROR') AS failed\n  FROM salesforceProd.login_events\n  WHERE $__timeFilter(timestamp)",
+          "rawSql": "SELECT\n      countIf(login_status = 'LOGIN_NO_ERROR') AS successful,\n      countIf(login_status != 'LOGIN_NO_ERROR') AS failed\n  FROM login_events\n  WHERE $__timeFilter(timestamp)",
           "refId": "A"
         }
       ],
@@ -503,7 +503,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": " SELECT\n      browser_type,\n      count() AS logins\n  FROM salesforceProd.login_events\n  WHERE $__timeFilter(timestamp)\n    AND browser_type != ''\n  GROUP BY browser_type\n  ORDER BY logins DESC\n  LIMIT 10",
+          "rawSql": " SELECT\n      browser_type,\n      count() AS logins\n  FROM login_events\n  WHERE $__timeFilter(timestamp)\n    AND browser_type != ''\n  GROUP BY browser_type\n  ORDER BY logins DESC\n  LIMIT 10",
           "refId": "A"
         }
       ],

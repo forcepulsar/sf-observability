@@ -32,7 +32,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as exceptions FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+          "rawSql": "SELECT toStartOfDay(timestamp) as t, count() as exceptions FROM apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
           "refId": "A"
         }
       ],
@@ -71,7 +71,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT exception_type, class_name, method_name, count() as occurrences, max(timestamp) as last_seen FROM salesforceProd.apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY exception_type, class_name, method_name ORDER BY occurrences DESC LIMIT 20",
+          "rawSql": "SELECT exception_type, class_name, method_name, count() as occurrences, max(timestamp) as last_seen FROM apex_exception_events WHERE $__timeFilter(timestamp) GROUP BY exception_type, class_name, method_name ORDER BY occurrences DESC LIMIT 20",
           "refId": "A"
         }
       ],
@@ -110,7 +110,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfDay(timestamp) as t, operation, count() as deploys FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) GROUP BY t, operation ORDER BY t",
+          "rawSql": "SELECT toStartOfDay(timestamp) as t, operation, count() as deploys FROM metadata_api_events WHERE $__timeFilter(timestamp) GROUP BY t, operation ORDER BY t",
           "refId": "A"
         }
       ],
@@ -149,7 +149,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT timestamp, dictGetOrDefault('salesforceProd.user_lookup', 'username', user_id, user_name) AS user_name, operation, entity_type, entity_name, round(run_time_ns/1000000, 0) as duration_ms FROM salesforceProd.metadata_api_events WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 50",
+          "rawSql": "SELECT timestamp, dictGetOrDefault('user_lookup', 'username', user_id, user_name) AS user_name, operation, entity_type, entity_name, round(run_time_ns/1000000, 0) as duration_ms FROM metadata_api_events WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 50",
           "refId": "A"
         }
       ],
@@ -188,7 +188,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT flow_name, count() as executions, round(avg(run_time_ns)/1000000, 1) as avg_ms, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, sum(interview_limit_hit) as limit_hits FROM salesforceProd.flow_execution_events WHERE $__timeFilter(timestamp) GROUP BY flow_name ORDER BY avg_ms DESC LIMIT 20",
+          "rawSql": "SELECT flow_name, count() as executions, round(avg(run_time_ns)/1000000, 1) as avg_ms, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, sum(interview_limit_hit) as limit_hits FROM flow_execution_events WHERE $__timeFilter(timestamp) GROUP BY flow_name ORDER BY avg_ms DESC LIMIT 20",
           "refId": "A"
         }
       ],
@@ -227,7 +227,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfHour(timestamp) as t, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
+          "rawSql": "SELECT toStartOfHour(timestamp) as t, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM uri_events WHERE $__timeFilter(timestamp) GROUP BY t ORDER BY t",
           "refId": "A"
         }
       ],
@@ -266,7 +266,7 @@
           },
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT uri, count() as hits, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM salesforceProd.uri_events WHERE $__timeFilter(timestamp) GROUP BY uri ORDER BY p95_ms DESC LIMIT 20",
+          "rawSql": "SELECT uri, count() as hits, round(quantile(0.95)(run_time_ns)/1000000, 1) as p95_ms, round(avg(run_time_ns)/1000000, 1) as avg_ms FROM uri_events WHERE $__timeFilter(timestamp) GROUP BY uri ORDER BY p95_ms DESC LIMIT 20",
           "refId": "A"
         }
       ],

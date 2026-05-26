@@ -40,7 +40,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT status FROM salesforceProd.ingestion_runs ORDER BY started_at DESC LIMIT 1",
+          "rawSql": "SELECT status FROM ingestion_runs ORDER BY started_at DESC LIMIT 1",
           "refId": "A"
         }],
         "title": "Last run status",
@@ -75,7 +75,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT duration_ms / 1000.0 AS seconds FROM salesforceProd.ingestion_runs ORDER BY started_at DESC LIMIT 1",
+          "rawSql": "SELECT duration_ms / 1000.0 AS seconds FROM ingestion_runs ORDER BY started_at DESC LIMIT 1",
           "refId": "A"
         }],
         "title": "Last run duration",
@@ -110,7 +110,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT sum(rows_total) AS rows FROM salesforceProd.ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
+          "rawSql": "SELECT sum(rows_total) AS rows FROM ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
           "refId": "A"
         }],
         "title": "Rows ingested (24h)",
@@ -145,7 +145,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT sum(errors) AS errors FROM salesforceProd.ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
+          "rawSql": "SELECT sum(errors) AS errors FROM ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
           "refId": "A"
         }],
         "title": "Errors (24h)",
@@ -162,7 +162,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT started_at AS t, script, duration_ms / 1000.0 AS seconds\nFROM salesforceProd.ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
+          "rawSql": "SELECT started_at AS t, script, duration_ms / 1000.0 AS seconds\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
           "refId": "A"
         }],
         "title": "Run duration (seconds) by script",
@@ -179,7 +179,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT started_at AS t, script, rows_total AS rows\nFROM salesforceProd.ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
+          "rawSql": "SELECT started_at AS t, script, rows_total AS rows\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
           "refId": "A"
         }],
         "title": "Rows ingested per run by script",
@@ -196,7 +196,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
-          "rawSql": "SELECT toStartOfHour(started_at) AS t, status, count() AS events\nFROM salesforceProd.ingestion_events\nWHERE $__timeFilter(started_at)\nGROUP BY t, status\nORDER BY t",
+          "rawSql": "SELECT toStartOfHour(started_at) AS t, status, count() AS events\nFROM ingestion_events\nWHERE $__timeFilter(started_at)\nGROUP BY t, status\nORDER BY t",
           "refId": "A"
         }],
         "title": "Events per hour by status",
@@ -213,7 +213,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT event_type,\n       source,\n       count() AS runs,\n       sum(row_count) AS rows,\n       round(avg(duration_ms)/1000.0, 2) AS avg_sec,\n       round(max(duration_ms)/1000.0, 2) AS max_sec\nFROM salesforceProd.ingestion_events\nWHERE status = 'success' AND $__timeFilter(started_at)\nGROUP BY event_type, source\nORDER BY avg_sec DESC",
+          "rawSql": "SELECT event_type,\n       source,\n       count() AS runs,\n       sum(row_count) AS rows,\n       round(avg(duration_ms)/1000.0, 2) AS avg_sec,\n       round(max(duration_ms)/1000.0, 2) AS max_sec\nFROM ingestion_events\nWHERE status = 'success' AND $__timeFilter(started_at)\nGROUP BY event_type, source\nORDER BY avg_sec DESC",
           "refId": "A"
         }],
         "title": "Duration by event type (successful runs)",
@@ -230,7 +230,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT started_at,\n       script,\n       substring(run_id, 1, 8) AS run,\n       round(duration_ms/1000.0, 1) AS duration_sec,\n       files_total,\n       rows_total,\n       errors,\n       status\nFROM salesforceProd.ingestion_runs\nORDER BY started_at DESC\nLIMIT 50",
+          "rawSql": "SELECT started_at,\n       script,\n       substring(run_id, 1, 8) AS run,\n       round(duration_ms/1000.0, 1) AS duration_sec,\n       files_total,\n       rows_total,\n       errors,\n       status\nFROM ingestion_runs\nORDER BY started_at DESC\nLIMIT 50",
           "refId": "A"
         }],
         "title": "Recent runs",
@@ -247,7 +247,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT started_at,\n       script,\n       event_type,\n       source,\n       status,\n       row_count,\n       error_message\nFROM salesforceProd.ingestion_events\nWHERE status IN ('failed','skipped') AND $__timeFilter(started_at)\nORDER BY started_at DESC\nLIMIT 100",
+          "rawSql": "SELECT started_at,\n       script,\n       event_type,\n       source,\n       status,\n       row_count,\n       error_message\nFROM ingestion_events\nWHERE status IN ('failed','skipped') AND $__timeFilter(started_at)\nORDER BY started_at DESC\nLIMIT 100",
           "refId": "A"
         }],
         "title": "Recent failures and skips",
@@ -264,7 +264,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT event_type,\n       max(log_date)                                           AS latest_log_date,\n       max(ingested_at)                                        AS last_ingested,\n       dateDiff('minute', max(ingested_at), now())             AS minutes_since_ingest,\n       count()                                                 AS files_ingested,\n       sum(row_count)                                          AS rows_ingested\nFROM salesforceProd.ingestion_state\nGROUP BY event_type\nORDER BY last_ingested DESC",
+          "rawSql": "SELECT event_type,\n       max(log_date)                                           AS latest_log_date,\n       max(ingested_at)                                        AS last_ingested,\n       dateDiff('minute', max(ingested_at), now())             AS minutes_since_ingest,\n       count()                                                 AS files_ingested,\n       sum(row_count)                                          AS rows_ingested\nFROM ingestion_state\nGROUP BY event_type\nORDER BY last_ingested DESC",
           "refId": "A"
         }],
         "title": "Data freshness by event type",
@@ -281,7 +281,7 @@
           "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
           "pluginVersion": "4.14.1",
           "queryType": "table",
-          "rawSql": "SELECT ingested_at,\n       event_type,\n       log_file_id,\n       log_date,\n       row_count\nFROM salesforceProd.ingestion_state\nORDER BY ingested_at DESC\nLIMIT 50",
+          "rawSql": "SELECT ingested_at,\n       event_type,\n       log_file_id,\n       log_date,\n       row_count\nFROM ingestion_state\nORDER BY ingested_at DESC\nLIMIT 50",
           "refId": "A"
         }],
         "title": "Most recent files ingested",
