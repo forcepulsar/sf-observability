@@ -10,3 +10,7 @@ API_LIMIT_INVESTIGATION.md
 PRESENTATION.md
 sf_support_888_connected_apps.csv
 schema/connected_app_registry.csv
+cert/*.key
+cert/*.pem
+cert/*.p12
+cert/*.jks

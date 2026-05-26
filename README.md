@@ -45,7 +45,7 @@ Salesforce EventLogFile API          Threat Detection EventStore
 
 ## Prerequisites
 
-- [Docker](https://www.docker.com/) and Docker Compose
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — install this first if you don't have it
 - [ClickHouse Cloud](https://clickhouse.cloud/) account (free tier works)
 - Salesforce org with [Event Monitoring](https://help.salesforce.com/s/articleView?id=sf.real_time_em_buying.htm) enabled
 - An Anthropic API key (for LibreChat AI features — optional)
@@ -63,7 +63,15 @@ cp .env.example .env
 
 **2. Create the ClickHouse schema**
 
-Run `schema/schema_prod.sql` against your ClickHouse Cloud instance to create all tables.
+There are two schema files that must both be applied. The easiest way is the setup script:
+
+```bash
+./schema/setup.sh <clickhouse-host> <password> <database-name>
+# Example:
+./schema/setup.sh abc123.us-east-1.aws.clickhouse.cloud mypassword salesforceProd
+```
+
+This creates the database, substitutes the name throughout both schema files, and applies them in order. If you prefer to apply them manually via the ClickHouse Cloud SQL console, run `schema/schema_prod.sql` then `schema/schema_prod_events.sql` (substituting `salesforceProd` with your `CH_DATABASE` value in both).
 
 **3. Start the stack**
 

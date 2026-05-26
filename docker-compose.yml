@@ -11,6 +11,7 @@ services:
       - LOCK_FILE=/var/lock/sf_ingest.lock
     volumes:
       - ingest_locks:/var/lock
+      - ./cert:/app/cert:ro    # JWT private key — place server.key here, set SF_JWT_KEY_FILE=/app/cert/server.key
     networks: [sf-obs]
 
   # ── LibreChat + ClickHouse MCP ───────────────────────────────────────────────
@@ -19,7 +20,7 @@ services:
       context: ./librechat
       dockerfile: Dockerfile.custom
     ports:
-      - "3080:3080"
+      - "${LIBRECHAT_PORT:-3080}:3080"
     depends_on:
       - mongodb
       - rag_api
@@ -84,7 +85,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "${GRAFANA_PORT:-3000}:3000"
     env_file: .env
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin

@@ -1,0 +1,3 @@
+# Place your JWT private key file here (e.g. server.key)
+# Then set SF_JWT_KEY_FILE=/app/cert/server.key in .env
+# This directory is gitignored — never commit key files
