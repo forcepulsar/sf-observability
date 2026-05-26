@@ -1,294 +1,665 @@
 {
-  "dashboard": {
-    "title": "Salesforce - Ingestion Pipeline Monitor",
-    "uid": "sf-ingestion-monitor",
-    "tags": ["salesforce", "ingestion", "ops"],
-    "timezone": "",
-    "refresh": "5m",
-    "time": {"from": "now-24h", "to": "now"},
-    "version": 1,
-    "panels": [
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [
-              {"options": {"success": {"color": "green", "index": 0}}, "type": "value"},
-              {"options": {"partial": {"color": "yellow", "index": 1}}, "type": "value"},
-              {"options": {"failed":  {"color": "red", "index": 2}}, "type": "value"}
-            ],
-            "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+  "title": "Salesforce - Ingestion Pipeline Monitor",
+  "uid": "sf-ingestion-monitor",
+  "tags": [
+    "salesforce",
+    "ingestion",
+    "ops"
+  ],
+  "timezone": "",
+  "refresh": "5m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "version": 1,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
-          "overrides": []
+          "mappings": [
+            {
+              "options": {
+                "success": {
+                  "color": "green",
+                  "index": 0
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "partial": {
+                  "color": "yellow",
+                  "index": 1
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "failed": {
+                  "color": "red",
+                  "index": 2
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
         },
-        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
-        "id": 1,
-        "options": {
-          "colorMode": "background",
-          "graphMode": "none",
-          "justifyMode": "center",
-          "orientation": "auto",
-          "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-          "textMode": "value"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "pluginVersion": "13.0.0-23069273608.patch3",
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+        "textMode": "value"
+      },
+      "pluginVersion": "13.0.0-23069273608.patch3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT status FROM ingestion_runs ORDER BY started_at DESC LIMIT 1",
           "refId": "A"
-        }],
-        "title": "Last run status",
-        "type": "stat"
+        }
+      ],
+      "title": "Last run status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [],
-            "unit": "s",
-            "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 300}, {"color": "red", "value": 900}]}
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
-          "overrides": []
+          "mappings": [],
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 900
+              }
+            ]
+          }
         },
-        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
-        "id": 2,
-        "options": {
-          "colorMode": "value",
-          "graphMode": "area",
-          "justifyMode": "auto",
-          "orientation": "auto",
-          "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-          "textMode": "auto"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "pluginVersion": "13.0.0-23069273608.patch3",
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.0.0-23069273608.patch3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT duration_ms / 1000.0 AS seconds FROM ingestion_runs ORDER BY started_at DESC LIMIT 1",
           "refId": "A"
-        }],
-        "title": "Last run duration",
-        "type": "stat"
+        }
+      ],
+      "title": "Last run duration",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [],
-            "unit": "short",
-            "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
-          "overrides": []
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
         },
-        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
-        "id": 3,
-        "options": {
-          "colorMode": "value",
-          "graphMode": "area",
-          "justifyMode": "auto",
-          "orientation": "auto",
-          "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-          "textMode": "auto"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "pluginVersion": "13.0.0-23069273608.patch3",
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.0.0-23069273608.patch3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT sum(rows_total) AS rows FROM ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
           "refId": "A"
-        }],
-        "title": "Rows ingested (24h)",
-        "type": "stat"
+        }
+      ],
+      "title": "Rows ingested (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [],
-            "unit": "short",
-            "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 5}]}
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
           },
-          "overrides": []
+          "mappings": [],
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
         },
-        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
-        "id": 4,
-        "options": {
-          "colorMode": "background",
-          "graphMode": "none",
-          "justifyMode": "center",
-          "orientation": "auto",
-          "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-          "textMode": "auto"
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "pluginVersion": "13.0.0-23069273608.patch3",
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.0.0-23069273608.patch3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT sum(errors) AS errors FROM ingestion_runs WHERE started_at >= now() - INTERVAL 24 HOUR",
           "refId": "A"
-        }],
-        "title": "Errors (24h)",
-        "type": "stat"
+        }
+      ],
+      "title": "Errors (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "id": 5,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 0,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
           "rawSql": "SELECT started_at AS t, script, duration_ms / 1000.0 AS seconds\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
           "refId": "A"
-        }],
-        "title": "Run duration (seconds) by script",
-        "type": "timeseries"
+        }
+      ],
+      "title": "Run duration (seconds) by script",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "id": 6,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 6,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 0,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
           "rawSql": "SELECT started_at AS t, script, rows_total AS rows\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
           "refId": "A"
-        }],
-        "title": "Rows ingested per run by script",
-        "type": "timeseries"
+        }
+      ],
+      "title": "Rows ingested per run by script",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-        "id": 7,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 0,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "timeseries",
           "rawSql": "SELECT toStartOfHour(started_at) AS t, status, count() AS events\nFROM ingestion_events\nWHERE $__timeFilter(started_at)\nGROUP BY t, status\nORDER BY t",
           "refId": "A"
-        }],
-        "title": "Events per hour by status",
-        "type": "timeseries"
+        }
+      ],
+      "title": "Events per hour by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
-        "id": 8,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 8,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT event_type,\n       source,\n       count() AS runs,\n       sum(row_count) AS rows,\n       round(avg(duration_ms)/1000.0, 2) AS avg_sec,\n       round(max(duration_ms)/1000.0, 2) AS max_sec\nFROM ingestion_events\nWHERE status = 'success' AND $__timeFilter(started_at)\nGROUP BY event_type, source\nORDER BY avg_sec DESC",
           "refId": "A"
-        }],
-        "title": "Duration by event type (successful runs)",
-        "type": "table"
+        }
+      ],
+      "title": "Duration by event type (successful runs)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 20},
-        "id": 9,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT started_at,\n       script,\n       substring(run_id, 1, 8) AS run,\n       round(duration_ms/1000.0, 1) AS duration_sec,\n       files_total,\n       rows_total,\n       errors,\n       status\nFROM ingestion_runs\nORDER BY started_at DESC\nLIMIT 50",
           "refId": "A"
-        }],
-        "title": "Recent runs",
-        "type": "table"
+        }
+      ],
+      "title": "Recent runs",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
-        "id": 10,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 10,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT started_at,\n       script,\n       event_type,\n       source,\n       status,\n       row_count,\n       error_message\nFROM ingestion_events\nWHERE status IN ('failed','skipped') AND $__timeFilter(started_at)\nORDER BY started_at DESC\nLIMIT 100",
           "refId": "A"
-        }],
-        "title": "Recent failures and skips",
-        "type": "table"
+        }
+      ],
+      "title": "Recent failures and skips",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 10, "w": 12, "x": 0, "y": 36},
-        "id": 11,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 11,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT event_type,\n       max(log_date)                                           AS latest_log_date,\n       max(ingested_at)                                        AS last_ingested,\n       dateDiff('minute', max(ingested_at), now())             AS minutes_since_ingest,\n       count()                                                 AS files_ingested,\n       sum(row_count)                                          AS rows_ingested\nFROM ingestion_state\nGROUP BY event_type\nORDER BY last_ingested DESC",
           "refId": "A"
-        }],
-        "title": "Data freshness by event type",
-        "type": "table"
+        }
+      ],
+      "title": "Data freshness by event type",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
       },
-      {
-        "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
-        "gridPos": {"h": 10, "w": 12, "x": 12, "y": 36},
-        "id": 12,
-        "targets": [{
-          "datasource": {"type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc"},
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 12,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "editorType": "sql",
           "format": 1,
-          "meta": {"builderOptions": {"columns": [], "database": "", "limit": 1000, "mode": "list", "queryType": "table", "table": ""}},
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
           "pluginVersion": "4.14.1",
           "queryType": "table",
           "rawSql": "SELECT ingested_at,\n       event_type,\n       log_file_id,\n       log_date,\n       row_count\nFROM ingestion_state\nORDER BY ingested_at DESC\nLIMIT 50",
           "refId": "A"
-        }],
-        "title": "Most recent files ingested",
-        "type": "table"
-      }
-    ]
-  },
-  "folderId": 0,
-  "overwrite": true
+        }
+      ],
+      "title": "Most recent files ingested",
+      "type": "table"
+    }
+  ]
 }
