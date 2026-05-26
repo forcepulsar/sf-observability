@@ -1,6 +1,6 @@
 """Ingestion telemetry — writes timing rows to ClickHouse for dashboard use.
 
-Two tables (defined in schema/schema_prod.sql):
+Two tables (defined in schema/schema_core.sql):
   - ingestion_events  one row per file or SOQL object sync
   - ingestion_runs    one row per invocation of ingest.py / ingest_threat_store.py
 """

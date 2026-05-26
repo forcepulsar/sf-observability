@@ -16,7 +16,7 @@ curl -s "https://${HOST}:8443/" \
   --user "default:${PASSWORD}" \
   --data "CREATE DATABASE IF NOT EXISTS ${DATABASE}"
 
-for file in schema_prod.sql schema_prod_events.sql; do
+for file in schema_core.sql schema_events.sql; do
   echo "Applying $file..."
   sed "s/salesforceProd/${DATABASE}/g" "${SCRIPT_DIR}/${file}" | \
     curl -s "https://${HOST}:8443/" \

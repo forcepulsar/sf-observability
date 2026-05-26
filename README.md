@@ -71,7 +71,7 @@ There are two schema files that must both be applied. The easiest way is the set
 ./schema/setup.sh abc123.us-east-1.aws.clickhouse.cloud mypassword salesforceProd
 ```
 
-This creates the database, substitutes the name throughout both schema files, and applies them in order. If you prefer to apply them manually via the ClickHouse Cloud SQL console, run `schema/schema_prod.sql` then `schema/schema_prod_events.sql` (substituting `salesforceProd` with your `CH_DATABASE` value in both).
+This creates the database, substitutes the name throughout both schema files, and applies them in order. If you prefer to apply them manually via the ClickHouse Cloud SQL console, run `schema/schema_core.sql` then `schema/schema_events.sql` (substituting `salesforceProd` with your `CH_DATABASE` value in both).
 
 **3. Start the stack**
 
