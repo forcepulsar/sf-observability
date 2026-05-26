@@ -1,13 +1,20 @@
 """
 Load connected_app_registry.csv into ClickHouse.
 
-Run whenever the CSV is updated:
+Run whenever the CSV is updated. Two options:
+
+Option A — directly with ClickHouse env vars set locally:
     python3 schema/load_registry.py
 
-Uses the same ClickHouse credentials as the ingest pipeline (CH_HOST, CH_PORT, etc.)
-or falls back to the Salesforce CLI token flow used by ingest.py.
+Option B — via the ingest container (no local env vars needed):
+    docker cp schema/connected_app_registry.csv sf-observability-ingest-1:/tmp/connected_app_registry.csv
+    docker exec sf-observability-ingest-1 python3 /app/schema/load_registry.py --csv /tmp/connected_app_registry.csv
+
+Note: connected_app_registry.csv is gitignored (contains internal app names).
+The example template is at schema/connected_app_registry_example.csv.
 """
 
+import argparse
 import csv
 import os
 import sys
@@ -22,21 +29,15 @@ CH_USER     = os.environ.get("CH_USER", "default")
 CH_PASSWORD = os.environ.get("CH_PASSWORD", "")
 CH_DATABASE = os.environ.get("CH_DATABASE", "salesforceProd")
 
-CSV_PATH = Path(__file__).parent / "connected_app_registry.csv"
 
-
-def load():
+def load(csv_path: Path):
     client = clickhouse_connect.get_client(
-        host=CH_HOST,
-        port=CH_PORT,
-        username=CH_USER,
-        password=CH_PASSWORD,
-        database=CH_DATABASE,
-        secure=True,
+        host=CH_HOST, port=CH_PORT, username=CH_USER,
+        password=CH_PASSWORD, database=CH_DATABASE, secure=True,
     )
 
     rows = []
-    with open(CSV_PATH, encoding="utf-8") as f:
+    with open(csv_path, encoding="utf-8") as f:
         for rec in csv.DictReader(f):
             rows.append([
                 rec["connected_app_id"].strip(),
@@ -59,4 +60,8 @@ def load():
 
 
 if __name__ == "__main__":
-    load()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", default=None, help="Path to CSV file (default: schema/connected_app_registry.csv)")
+    args = parser.parse_args()
+    csv_path = Path(args.csv) if args.csv else Path(__file__).parent / "connected_app_registry.csv"
+    load(csv_path)

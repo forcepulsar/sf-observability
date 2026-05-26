@@ -1,4 +1,4 @@
 connected_app_id,app_name,category,notes
-8883i000001XXXXX,Your App Name Here,Data Integration,Replace this with your connected app ID and name from Salesforce Support
-888Hs00000XXXXXX,Another Integration,Data Integration,Run load_registry.py after updating this file
-0H4Uy0000XXXXXXX,Example Connected App,DevTools,Connected apps (0H4 prefix) can be found in Salesforce Setup → Connected Apps
+8883i000001XXXXX,Your App Name Here,Data Integration,"IDs are always 15 chars (from EventLogFile CSV). If you got an 18-char ID from SOQL (ApiTotalUsageEventLog) strip the last 3 chars: 8888Z000000pihzQAA → 8888Z000000pihz"
+888Hs00000XXXXXX,Another Integration,Data Integration,888-prefix IDs: contact Salesforce Support to identify. Not visible in Setup UI.
+0H4Uy0000XXXXXXX,Example Connected App,DevTools,0H4-prefix IDs: look up in Salesforce Setup → Apps → Connected Apps

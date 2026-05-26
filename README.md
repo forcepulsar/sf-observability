@@ -120,6 +120,58 @@ connected_app_id,app_name,category,notes
 0H4Uy0000000cGb,Gearset Deploy,DevTools,
 ```
 
+### What happens when an app is unknown
+
+When an app ID appears in usage data but is not in the registry, the system shows the raw 15-char ID rather than a name. Unknown apps are **never excluded** from totals or queries — they are always counted. This means:
+
+- All billing, error, and volume metrics remain accurate even when new integrations appear
+- The "Unregistered Connected Apps (Action Required)" panel in the SF Performance & Health dashboard surfaces any unknown IDs automatically
+- No data is silently lost — you will see the raw ID in place of a name until the registry is updated
+
+### Finding unknown apps: gap-detection query
+
+Run this query to find connected app IDs present in the last 30 days of API usage that are not yet in the registry:
+
+```sql
+SELECT
+    t.connected_app_id,
+    count() AS total_calls,
+    countIf(t.counts_against_api_limit = 1) AS billable_calls,
+    uniq(t.user_name) AS distinct_users,
+    groupArray(3)(DISTINCT t.user_name) AS sample_users,
+    min(toDate(t.timestamp)) AS first_seen,
+    max(toDate(t.timestamp)) AS last_seen,
+    groupArray(3)(DISTINCT t.client_ip) AS sample_ips
+FROM salesforceProd.api_total_usage_events t FINAL
+LEFT JOIN salesforceProd.connected_app_registry r FINAL
+    ON t.connected_app_id = r.connected_app_id
+WHERE t.timestamp >= now() - INTERVAL 30 DAY
+  AND t.connected_app_id != ''
+  AND r.connected_app_id = ''  -- not in registry
+GROUP BY t.connected_app_id
+ORDER BY billable_calls DESC
+```
+
+The same query (scoped to 7 days) runs automatically as the "Unregistered Connected Apps (Action Required)" panel in Grafana. Check it monthly or whenever new integrations are added.
+
+### 15-char vs 18-char IDs — important note
+
+Salesforce exposes connected app IDs in two different lengths depending on the source:
+
+| Source | ID length | Example |
+|---|---|---|
+| **EventLogFile CSV** (what we ingest) | **15-char** | `8888Z000000pihz` |
+| **`ApiTotalUsageEventLog` SOQL object** | **18-char** | `8888Z000000pihzQAA` |
+
+The registry uses **15-char IDs** (from EventLogFile). If you look up an ID via SOQL (`ApiTotalUsageEventLog`), you will get the 18-char version. To convert: strip the last 3 characters.
+
+```
+18-char: 8888Z000000pihzQAA
+15-char: 8888Z000000pihz      ← use this in the registry CSV
+```
+
+When writing SOQL queries that filter by connected app ID, use `LIKE '8888Z000000pihz%'` rather than an exact match, since SOQL returns 18-char IDs.
+
 ### Finding unknown app IDs
 
 Salesforce uses two ID prefixes with different lookup paths:
@@ -130,6 +182,23 @@ Salesforce uses two ID prefixes with different lookup paths:
 | `888` | OAuthConsumer / Remote Access (legacy) | **Contact Salesforce Support** — these IDs are not visible in the Setup UI |
 
 When you find a new unknown ID in the dashboards, add it to `schema/connected_app_registry.csv` and re-run `load_registry.py`. Unknown apps still appear in results using their raw ID — they are never excluded.
+
+### Adding a new app to the registry
+
+1. Identify the app name using the prefix table above
+2. Add a row to `schema/connected_app_registry.csv`:
+   ```
+   8888Z000000pihz,Clay,Data Integration,Added 2026-05-24 after SF Support identified
+   ```
+3. Load it into ClickHouse:
+   ```bash
+   python3 schema/load_registry.py
+   ```
+   Or via the ingest container if you don't have local env vars:
+   ```bash
+   docker cp schema/connected_app_registry.csv sf-observability-ingest-1:/tmp/connected_app_registry.csv
+   docker exec sf-observability-ingest-1 python3 /app/schema/load_registry.py --csv /tmp/connected_app_registry.csv
+   ```
 
 ### Best practice: one connected app per integration
 
