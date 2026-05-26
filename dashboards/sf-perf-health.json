@@ -2536,6 +2536,76 @@
             "format": 1
           }
         ]
+      },
+      {
+        "type": "table",
+        "id": 85,
+        "title": "Unregistered Connected Apps (Action Required)",
+        "description": "Connected app IDs present in API usage data (last 7 days) but missing from connected_app_registry. Unknown apps are still counted in all totals — they show here so they can be identified and added to the registry.\n\nHow to identify:\n- IDs starting with 0H4 → look up in Salesforce Setup → Apps → Connected Apps\n- IDs starting with 888 → open a Salesforce Support ticket\n\nOnce identified, add to schema/connected_app_registry.csv and run: python3 schema/load_registry.py",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 142
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "cfgz0zrjwhudcc"
+        },
+        "options": {
+          "sortBy": [
+            {
+              "displayName": "Billable Calls",
+              "desc": true
+            }
+          ],
+          "footer": {
+            "show": false
+          }
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Billable Calls"
+              },
+              "properties": [
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "yellow",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 1000
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "cfgz0zrjwhudcc"
+            },
+            "rawSql": "SELECT\n    t.connected_app_id AS \"App ID (unregistered)\",\n    count() AS \"Total Calls\",\n    countIf(t.counts_against_api_limit = 1) AS \"Billable Calls\",\n    uniq(t.user_name) AS \"Distinct Users\",\n    groupArray(3)(DISTINCT t.user_name) AS \"Sample Users\",\n    min(toDate(t.timestamp)) AS \"First Seen\",\n    max(toDate(t.timestamp)) AS \"Last Seen\",\n    groupArray(3)(DISTINCT t.client_ip) AS \"Sample IPs\"\nFROM salesforceProd.api_total_usage_events t FINAL\nLEFT JOIN salesforceProd.connected_app_registry r FINAL\n    ON t.connected_app_id = r.connected_app_id\nWHERE t.timestamp >= now() - INTERVAL 7 DAY\n  AND t.connected_app_id != ''\n  AND r.connected_app_id = ''\nGROUP BY t.connected_app_id\nORDER BY \"Billable Calls\" DESC",
+            "format": 1
+          }
+        ]
       }
     ],
     "templating": {
