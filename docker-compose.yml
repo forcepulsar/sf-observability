@@ -18,7 +18,6 @@ services:
     build:
       context: ./librechat
       dockerfile: Dockerfile.custom
-    container_name: LibreChat
     ports:
       - "3080:3080"
     depends_on:
@@ -42,7 +41,6 @@ services:
     networks: [sf-obs]
 
   mongodb:
-    container_name: chat-mongodb
     image: mongo:8.0.20
     restart: unless-stopped
     volumes:
@@ -51,7 +49,6 @@ services:
     networks: [sf-obs]
 
   meilisearch:
-    container_name: chat-meilisearch
     image: getmeili/meilisearch:v1.35.1
     restart: unless-stopped
     environment:
@@ -62,7 +59,6 @@ services:
     networks: [sf-obs]
 
   vectordb:
-    container_name: vectordb
     image: pgvector/pgvector:0.8.0-pg15-trixie
     restart: unless-stopped
     environment:
@@ -74,7 +70,6 @@ services:
     networks: [sf-obs]
 
   rag_api:
-    container_name: rag_api
     image: registry.librechat.ai/danny-avila/librechat-rag-api-dev-lite:latest
     restart: unless-stopped
     environment:
@@ -88,7 +83,6 @@ services:
   # ── Grafana ──────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
-    container_name: sf-grafana
     ports:
       - "3000:3000"
     env_file: .env
