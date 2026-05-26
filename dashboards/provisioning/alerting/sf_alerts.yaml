@@ -1,0 +1,220 @@
+# Salesforce Security & Pipeline Alerting Rules
+#
+# These rules fire against ClickHouse Cloud via the provisioned datasource.
+# Before enabling: replace CLICKHOUSE_DS_UID with the actual datasource UID.
+# Find it at: Grafana → Connections → Data Sources → your ClickHouse datasource → copy the UID from the URL.
+#
+# Grafana alerting docs: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
+
+apiVersion: 1
+
+groups:
+  # ── Security alerts ─────────────────────────────────────────────────────────
+
+  - name: Salesforce Security
+    folder: Salesforce Alerts
+    interval: 10m
+    rules:
+
+      - uid: sf-impossible-travel
+        title: Impossible Travel — Same User, Multiple Countries
+        condition: C
+        for: 0s
+        annotations:
+          summary: "User {{ $labels.user_name }} logged in from multiple countries within 1 hour"
+          description: "Possible account compromise or shared credential. Review login_events for this user."
+        labels:
+          severity: high
+          team: security
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT
+                  user_name,
+                  countDistinct(country) AS country_count
+                FROM salesforceProd.login_events FINAL
+                WHERE
+                  timestamp >= now() - INTERVAL 1 HOUR
+                  AND login_status = 'LOGIN_NO_ERROR'
+                  AND country != ''
+                GROUP BY user_name
+                HAVING country_count >= 2
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [0], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: count }
+              refId: C
+              type: classic_conditions
+
+      - uid: sf-bulk-export-spike
+        title: Large Bulk Export — Unusual Volume
+        condition: C
+        for: 0s
+        annotations:
+          summary: "High-volume bulk export detected: {{ $values.A }} records"
+          description: "A single bulk API job exported an unusually large number of records. Review bulk_api2_events."
+        labels:
+          severity: medium
+          team: security
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT max(rows_processed) AS max_rows
+                FROM salesforceProd.bulk_api2_events FINAL
+                WHERE
+                  timestamp >= now() - INTERVAL 1 HOUR
+                  AND operation_type IN ('query', 'queryAll')
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [50000], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions
+
+      - uid: sf-auth-failure-burst
+        title: Authentication Failure Burst — Possible Credential Stuffing
+        condition: C
+        for: 0s
+        annotations:
+          summary: "{{ $values.A }} failed logins in the last 15 minutes"
+          description: "High volume of login failures may indicate a credential stuffing attack. Check login_events grouped by source_ip."
+        labels:
+          severity: high
+          team: security
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT count() AS failure_count
+                FROM salesforceProd.login_events FINAL
+                WHERE
+                  timestamp >= now() - INTERVAL 15 MINUTE
+                  AND login_status != 'LOGIN_NO_ERROR'
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [100], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions
+
+      - uid: sf-admin-impersonation
+        title: Admin Login-As Activity Detected
+        condition: C
+        for: 0s
+        annotations:
+          summary: "Admin impersonation: {{ $labels.delegate_user }} logged in as {{ $labels.actual_user }}"
+          description: "A Salesforce administrator used Login-As. Review login_as_events for context."
+        labels:
+          severity: low
+          team: security
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT count() AS impersonation_count
+                FROM salesforceProd.login_as_events FINAL
+                WHERE timestamp >= now() - INTERVAL 1 HOUR
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [0], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions
+
+  # ── Pipeline health alerts ───────────────────────────────────────────────────
+
+  - name: Ingest Pipeline Health
+    folder: Salesforce Alerts
+    interval: 30m
+    rules:
+
+      - uid: sf-ingest-stale
+        title: Ingest Pipeline Stale — No New Data in 8 Hours
+        condition: C
+        for: 0s
+        annotations:
+          summary: "No new rows ingested in 8+ hours"
+          description: "The ingest container may have stopped or lost connectivity. Check docker compose logs ingest."
+        labels:
+          severity: critical
+          team: ops
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT
+                  dateDiff('hour', max(ingested_at), now()) AS hours_since_last_ingest
+                FROM salesforceProd.ingestion_state FINAL
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [8], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions
+
+      - uid: sf-api-limit-warning
+        title: Salesforce API Limit — Warning Threshold
+        condition: C
+        for: 0s
+        annotations:
+          summary: "API usage at {{ $values.A }}% of daily limit"
+          description: "Salesforce API consumption is approaching the daily limit. Review api_total_usage_events for top consumers."
+        labels:
+          severity: warning
+          team: ops
+        data:
+          - refId: A
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                SELECT
+                  round(
+                    countIf(counts_against_api_limit = 1) * 100.0
+                    / 920000,   -- update with your org's actual limit
+                    1
+                  ) AS pct_used
+                FROM salesforceProd.api_total_usage_events FINAL
+                WHERE toDate(timestamp) = today()
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [70], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions

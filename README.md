@@ -1,6 +1,6 @@
 # Salesforce Observability with ClickHouse
 
-Real-time security and operational observability for Salesforce orgs — built on ClickHouse Cloud, Grafana, and LibreChat with a ClickHouse MCP server.
+Near-real-time security and operational observability for Salesforce orgs — built on ClickHouse Cloud, Grafana, and LibreChat with a ClickHouse MCP server.
 
 ## What it does
 
@@ -16,31 +16,26 @@ Pulls Salesforce [EventLogFile](https://developer.salesforce.com/docs/atlas.en-u
 
 ## Architecture
 
-```
-Salesforce EventLogFile API          Threat Detection EventStore
-        │                                      │
-        └──────────────┬───────────────────────┘
-                       ▼
-          ┌─────────────────────────────┐
-          │   Ingest Container          │
-          │   ingest.py   (every 6h)    │
-          │   ingest_threat_store.py    │
-          └──────────────┬──────────────┘
-                         │
-                         ▼
-          ┌─────────────────────────────┐
-          │   ClickHouse Cloud          │
-          │   ~30 event tables          │
-          │   connected_app_registry    │
-          └──────┬──────────────┬───────┘
-                 │              │
-                 ▼              ▼
-          ┌──────────┐   ┌─────────────────┐
-          │  Grafana  │   │   LibreChat      │
-          │  port 3000│   │   + ClickHouse  │
-          │           │   │   MCP server    │
-          │  9 dashboards │   port 3080     │
-          └──────────┘   └─────────────────┘
+```mermaid
+flowchart TD
+    SF1["Salesforce\nEventLogFile API"]
+    SF2["Salesforce\nThreat Detection\nEvent Store"]
+    SF3["Salesforce\nUsers & Profiles"]
+
+    subgraph Docker["Docker Compose Stack"]
+        direction TB
+        IC["Ingest Container"]
+        CH["ClickHouse Cloud\nevent tables + registry"]
+        GF["Grafana\nPre-built dashboards"]
+        LC["LibreChat + ClickHouse MCP\nAI-native investigation"]
+    end
+
+    SF1 --> IC
+    SF2 --> IC
+    SF3 --> IC
+    IC --> CH
+    CH --> GF
+    CH --> LC
 ```
 
 ## Prerequisites
@@ -55,7 +50,7 @@ Salesforce EventLogFile API          Threat Detection EventStore
 **1. Clone and configure**
 
 ```bash
-git clone https://github.com/your-org/sf-observability.git
+git clone https://github.com/forcepulsar/sf-observability.git
 cd sf-observability
 cp .env.example .env
 # Edit .env with your Salesforce and ClickHouse credentials
@@ -80,10 +75,12 @@ docker compose up -d
 ```
 
 This starts:
-- **Ingest container** — pulls EventLogFile data from Salesforce every 6 hours
+- **Ingest container** — pulls EventLogFile data from Salesforce on an hourly schedule (configurable via `INGEST_INTERVAL_SECONDS`)
 - **Grafana** at `http://localhost:3000` — log in with your `GRAFANA_ADMIN_PASSWORD`
 - **LibreChat** at `http://localhost:3080` — AI chat with direct ClickHouse access via MCP
 - **Supporting services** — MongoDB, Meilisearch, pgvector (all for LibreChat)
+
+For the full step-by-step setup guide, see [QUICKSTART.md](QUICKSTART.md).
 
 **4. Set up Salesforce JWT authentication**
 
@@ -326,6 +323,7 @@ Key types: `Login`, `RestApi`, `API` (SOAP), `BulkApi2`, `ApexTrigger`, `ApexExe
 
 ## Limitations
 
+- **Data latency is near-real-time, not streaming.** Salesforce publishes EventLogFile data hourly (typically 1–3 hours after events occur). The ingest container runs hourly by default, giving you data that is at most a few hours old. ClickHouse queries themselves execute in real-time against the stored data. Set `INGEST_INTERVAL_SECONDS` in `.env` to adjust the ingestion frequency.
 - Requires Salesforce Event Monitoring add-on (not included in standard org editions)
 - Daily API Total Usage (`ApiTotalUsage`) is a daily log file — near-real-time analysis uses the hourly `RestApi` and `API` event types instead
 - The Salesforce daily API limit varies by org edition and license count — check Setup → Company Information for your specific limit

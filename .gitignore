@@ -8,7 +8,6 @@ __pycache__/
 # Instance-specific investigation files — not for public repo
 API_LIMIT_INVESTIGATION.md
 PRESENTATION.md
-SCHEMA_AUDIT.md
 TODO.md
 sf_support_888_connected_apps.csv
 schema/connected_app_registry.csv
