@@ -85,12 +85,11 @@ This starts:
 - **LibreChat** at `http://localhost:3080` — AI chat with direct ClickHouse access via MCP
 - **Supporting services** — MongoDB, Meilisearch, pgvector (all for LibreChat)
 
-**4. Confirm Salesforce user permissions**
+**4. Set up Salesforce JWT authentication**
 
-The Salesforce user configured in `.env` needs these permissions:
-- **View Event Log Files** — required to access EventLogFile data (comes with Event Monitoring add-on)
-- **View Setup and Configuration** — required to read `ProfileId` on the User object; without this the ingest crashes on startup
-- **API Enabled** — standard requirement for any API integration
+The pipeline uses JWT/ECA (certificate-based) auth. This is a one-time setup — see [Authentication](#authentication) for step-by-step instructions to create the External Client App, generate a certificate, and populate `SF_JWT_CLIENT_ID` / `SF_JWT_KEY_FILE` / `SF_JWT_USERNAME` in your `.env`.
+
+If you just want to verify the rest of the stack first, you can temporarily use `SF_ACCESS_TOKEN` (see [Access token](#access-token-cicd-only)) while you complete the ECA setup.
 
 **5. Trigger initial ingest**
 
@@ -221,33 +220,84 @@ Sharing a single Salesforce user across multiple integrations makes it impossibl
 
 ## Authentication
 
-The ingest pipeline requires **JWT/ECA authentication** (the Salesforce-recommended approach for unattended server processes). Username and password are not supported.
+The ingest pipeline requires **JWT/ECA authentication** — the Salesforce-recommended approach for unattended server processes. Username/password auth is not supported.
 
-### Option A — JWT/ECA (required for production)
+JWT uses a certificate-based flow: the pipeline signs a request with your private key, Salesforce validates it against the uploaded certificate, and returns an access token. No human interaction needed after initial setup; tokens are refreshed automatically each run.
 
-JWT uses a certificate-based flow that never expires between runs. One-time setup:
+### Salesforce setup — one-time steps
+
+#### 1. Create a dedicated ingest user
+
+Create a dedicated Salesforce user for the pipeline (don't reuse an existing account — this ensures API usage in dashboards is attributed correctly to the pipeline vs. a human user).
+
+1. **Setup → Users → New User**
+2. Username: e.g. `sf-observability-ingest@yourorg.com`
+3. Profile: System Administrator works; or use a custom profile/Permission Set with these permissions:
+   - **View Event Log Files** — required for EventLogFile API (bundled with Event Monitoring add-on)
+   - **View Setup and Configuration** — required to read `ProfileId`/`ProfileName` on User records
+   - **API Enabled** — required for all REST API calls
+
+#### 2. Generate a key pair
+
+Run once on the machine where the Docker container will run:
 
 ```bash
-# 1. Generate a key pair
-openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes
-
-# 2. In Salesforce Setup → Apps → External Client Apps:
-#    - Create a new ECA, enable "Enable for Device Flow" and "Use digital signatures"
-#    - Upload server.crt as the certificate
-#    - Copy the Consumer Key
-
-# 3. Add to .env:
-SF_JWT_CLIENT_ID=<Consumer Key>
-SF_JWT_KEY_FILE=/path/to/server.key
-SF_JWT_USERNAME=your-ingest-user@yourorg.com
+mkdir -p cert
+openssl req -x509 -newkey rsa:2048 \
+  -keyout cert/server.key \
+  -out cert/server.crt \
+  -days 365 -nodes \
+  -subj "/CN=sf-observability"
 ```
 
-### Option B — Access token (CI/CD only)
+- `cert/server.key` — private key. Keep this on the host only; never commit it (`.gitignore` covers `cert/*.key`)
+- `cert/server.crt` — certificate to upload to Salesforce in the next step
 
-For pipelines that obtain a token externally (e.g. from a prior JWT login step):
+#### 3. Create the External Client App (ECA)
+
+1. **Setup → Apps → External Client Apps → New External Client App**
+2. Fill in the basics (App Name, API Name, Contact Email)
+3. Under **OAuth Settings**:
+   - Check **Enable OAuth Settings**
+   - Add scope: **Manage user data via APIs (api)**
+   - Check **Use digital signatures**
+   - Upload your `cert/server.crt`
+4. Save — Salesforce will generate a **Consumer Key** (also called Client ID). Copy it.
+
+#### 4. Pre-authorize the ingest user
+
+Salesforce requires the ingest user to be explicitly allowed before the JWT flow works:
+
+1. **Setup → Apps → External Client Apps → Manage** (next to your app)
+2. Click **Edit Policies**
+3. Set **Permitted Users** to **Admin approved users are pre-authorized**
+4. Save, then click **Manage Users → Add** and add your ingest user
+
+#### 5. Update .env
 
 ```bash
-# Get a token: sf org display --target-org MyOrg --json  →  copy "accessToken"
+SF_JWT_CLIENT_ID=<Consumer Key from step 3>
+SF_JWT_KEY_FILE=/app/cert/server.key    # in-container path — don't change this line
+SF_JWT_USERNAME=sf-observability-ingest@yourorg.com
+SF_INSTANCE_URL=https://yourorg.my.salesforce.com
+SF_ORG_ALIAS=MyOrg
+```
+
+The `cert/` directory on your host is volume-mounted into the container at `/app/cert/`. The key stays on the host; the container reads it at runtime.
+
+#### 6. Verify
+
+```bash
+docker compose up -d
+docker compose logs ingest --tail=20
+# Should show: Auth: JWT/ECA as yourorg
+```
+
+### Access token (CI/CD only)
+
+For pipelines that pre-obtain a token in a prior step (e.g. a GitHub Actions workflow that runs `sf org login jwt` and then passes `SF_ACCESS_TOKEN` to a downstream job):
+
+```bash
 SF_ACCESS_TOKEN=<token>
 SF_INSTANCE_URL=https://yourorg.my.salesforce.com
 ```
