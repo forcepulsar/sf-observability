@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .mcp.json
+.claude/
 
 # Instance-specific investigation files — not for public repo
 API_LIMIT_INVESTIGATION.md
