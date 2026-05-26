@@ -29,7 +29,7 @@ run_statement() {
   local http_code
   http_code=$(echo "$response" | tail -1)
   local body
-  body=$(echo "$response" | head -n -1)
+  body=$(echo "$response" | sed '$d')
 
   if [[ "$http_code" != "200" ]] || echo "$body" | grep -qi "exception\|error\|code:"; then
     echo "  ✗ ERROR (HTTP $http_code): $body" >&2
