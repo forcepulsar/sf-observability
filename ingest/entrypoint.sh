@@ -18,6 +18,11 @@ while true; do
         && echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] ingest_threat_store.py done" \
         || echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] ingest_threat_store.py FAILED (continuing)"
 
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] Optimizing tables to eliminate duplicates…"
+    python3 /app/schema/optimize_tables.py \
+        && echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] optimize done" \
+        || echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] optimize FAILED (continuing)"
+
     echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] Sleeping ${INTERVAL}s..."
     sleep "${INTERVAL}"
 done

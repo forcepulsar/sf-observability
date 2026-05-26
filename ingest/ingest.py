@@ -14,6 +14,7 @@ Usage:
 """
 
 import csv
+import fcntl
 import io
 import json
 import logging
@@ -669,6 +670,41 @@ CONFIG: dict[str, dict] = {
     },
 
     # ------------------------------------------------------------------
+    # ApiTotalUsageHourly → api_total_usage_events (same table, hourly files)
+    # Gives connected app attribution with ~1h lag instead of 24h.
+    # Salesforce generates 2 Sequence files per hour for high-volume orgs,
+    # so limit_override=50 ensures we capture all sequences for the last 24h.
+    # ReplacingMergeTree deduplicates overlap with the daily file automatically.
+    # ------------------------------------------------------------------
+    "ApiTotalUsageHourly": {
+        "table": "api_total_usage_events",
+        "sf_event_type": "ApiTotalUsage",
+        "column_map": {
+            "TIMESTAMP_DERIVED":        "timestamp",
+            "EVENT_TYPE":               "event_type",
+            "REQUEST_ID":               "request_id",
+            "ORGANIZATION_ID":          "organization_id",
+            "USER_ID":                  "user_id",
+            "USER_NAME":                "user_name",
+            "API_FAMILY":               "api_family",
+            "API_VERSION":              "api_version",
+            "HTTP_METHOD":              "http_method",
+            "STATUS_CODE":              "status_code",
+            "CLIENT_NAME":              "client_name",
+            "CLIENT_IP":                "client_ip",
+            "CONNECTED_APP_ID":         "connected_app_id",
+            "CONNECTED_APP_NAME":       "connected_app_name",
+            "API_RESOURCE":             "api_resource",
+            "ENTITY_NAME":              "entity_name",
+            "COUNTS_AGAINST_API_LIMIT": "counts_against_api_limit",
+            "API_CLIENT_CATEGORY":      "api_client_category",
+        },
+        "numeric_cols": ["status_code", "counts_against_api_limit"],
+        "interval": "Hourly",
+        "limit_override": 50,
+    },
+
+    # ------------------------------------------------------------------
     # FlowNavMetric  → flow_nav_metric_events
     # Used for: flow execution counts, error rates, slow flows
     # ------------------------------------------------------------------
@@ -796,8 +832,10 @@ def already_ingested(client, log_file_ids: list[str]) -> set[str]:
     if not log_file_ids:
         return set()
     placeholders = ", ".join(f"'{fid}'" for fid in log_file_ids)
+    # FINAL ensures we read a consistent deduplicated view of ingestion_state
+    # (SharedReplacingMergeTree may hold unmerged duplicate rows between flushes)
     result = client.query(
-        f"SELECT DISTINCT log_file_id FROM {CH_DATABASE}.ingestion_state "
+        f"SELECT DISTINCT log_file_id FROM {CH_DATABASE}.ingestion_state FINAL "
         f"WHERE log_file_id IN ({placeholders})"
     )
     return {row[0] for row in result.result_rows}
@@ -944,6 +982,17 @@ def main():
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_types = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
+    # P1: Prevent concurrent runs — two containers starting simultaneously (observed
+    # as close as 67ms apart) both pass the already_ingested() check before either
+    # has recorded state, causing every file to be inserted twice.
+    lock_path = Path(os.getenv("LOCK_FILE", "/tmp/sf_ingest.lock"))
+    lock_fh = open(lock_path, "w")
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        log.warning("Another ingest process is already running — exiting to avoid duplicates.")
+        sys.exit(0)
+
     validate_config()
 
     run_id = metrics.new_run_id()
@@ -992,7 +1041,9 @@ def main():
         if only_types and event_type not in only_types:
             return 0, 0, 0
         interval = "Daily" if backfill else cfg["interval"]
-        limit    = 90      if backfill else 24
+        # Allow per-event-type limit override (e.g. hourly ApiTotalUsage has 2 sequences/hour)
+        default_limit = 90 if backfill else cfg.get("limit_override", 24)
+        limit = default_limit
         thread_client = _make_ch_client()
 
         # P4: explicit date-range filter in normal mode so the intent is unambiguous
@@ -1011,10 +1062,13 @@ def main():
 
         log.info(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
 
+        # sf_event_type allows the config key to differ from the Salesforce EventType
+        # (e.g. "ApiTotalUsageHourly" config key → EventType = "ApiTotalUsage")
+        sf_event_type = cfg.get("sf_event_type", event_type)
         result = sf.query(
             f"SELECT Id, EventType, LogDate, LogFile, Interval "
             f"FROM EventLogFile "
-            f"WHERE EventType = '{event_type}' AND Interval = '{interval}' "
+            f"WHERE EventType = '{sf_event_type}' AND Interval = '{interval}' "
             f"{date_filter}"
             f"ORDER BY LogDate DESC LIMIT {limit}"
         )

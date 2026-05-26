@@ -346,6 +346,21 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
                 since_dt = datetime.now(timezone.utc) - timedelta(days=30)
 
         since_str = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Stable deduplication key: EventType + date (not a timestamp that changes each run)
+        state_key = f"{object_name}_{since_dt.strftime('%Y-%m-%d')}"
+
+        # Skip if this date window was already successfully ingested
+        try:
+            already = client.query(
+                f"SELECT count() FROM {CH_DATABASE}.ingestion_state FINAL "
+                f"WHERE log_file_id = '{state_key}'"
+            )
+            if already.result_rows[0][0] > 0:
+                print(f"  [skip] already ingested ({state_key})")
+                continue
+        except Exception:
+            pass  # If the check fails, proceed with ingestion
+
         soql = (
             f"SELECT {cfg['soql_fields']} FROM {object_name} "
             f"WHERE EventDate >= {since_str} "
@@ -361,7 +376,7 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
             print(f"  [skip] {object_name} not accessible: {e}")
             metrics.record_event(
                 client, CH_DATABASE, run_id, "ingest_threat_store",
-                object_name, "threat_store", identifier=since_str,
+                object_name, "threat_store", identifier=state_key,
                 status="skipped", error_message=f"not accessible: {e}",
             )
             continue
@@ -369,7 +384,7 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
         try:
             with metrics.timed_event(
                 client, CH_DATABASE, run_id, "ingest_threat_store",
-                object_name, "threat_store", identifier=since_str,
+                object_name, "threat_store", identifier=state_key,
             ) as set_rows:
                 total = 0
                 while True:
@@ -401,6 +416,15 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
                     result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
 
                 set_rows(total)
+            # Record this date window as done so future runs skip it
+            try:
+                client.insert(
+                    f"{CH_DATABASE}.ingestion_state",
+                    [[state_key, object_name, since_dt.date(), total]],
+                    column_names=["log_file_id", "event_type", "log_date", "row_count"],
+                )
+            except Exception as e:
+                print(f"  [warn] Failed to record ingestion state for {state_key}: {e}")
             files_total += 1
             rows_total  += total
             print(f"  Inserted {total} record(s) into {table}")
@@ -444,7 +468,22 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
             since_dt = datetime.now(timezone.utc) - timedelta(days=30)
 
     since_str = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Stable deduplication key: EventType + date (not a timestamp that changes each run)
+    state_key = f"SetupAuditTrail_{since_dt.strftime('%Y-%m-%d')}"
+
     print(f"\n[SetupAuditTrail] Syncing from {since_str}…")
+
+    # Skip if this date window was already successfully ingested
+    try:
+        already = client.query(
+            f"SELECT count() FROM {CH_DATABASE}.ingestion_state FINAL "
+            f"WHERE log_file_id = '{state_key}'"
+        )
+        if already.result_rows[0][0] > 0:
+            print(f"  [skip] already ingested ({state_key})")
+            return 0, 0, 0
+    except Exception:
+        pass  # If the check fails, proceed with ingestion
 
     soql = (
         f"SELECT Id, Action, Section, CreatedDate, CreatedById, "
@@ -460,7 +499,7 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
         print(f"  [skip] SetupAuditTrail not accessible: {e}")
         metrics.record_event(
             client, CH_DATABASE, run_id, "ingest_threat_store",
-            "SetupAuditTrail", "setup_audit", identifier=since_str,
+            "SetupAuditTrail", "setup_audit", identifier=state_key,
             status="skipped", error_message=f"not accessible: {e}",
         )
         return 0, 0, 0
@@ -468,7 +507,7 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
     try:
         with metrics.timed_event(
             client, CH_DATABASE, run_id, "ingest_threat_store",
-            "SetupAuditTrail", "setup_audit", identifier=since_str,
+            "SetupAuditTrail", "setup_audit", identifier=state_key,
         ) as set_rows:
             total = 0
             while True:
@@ -498,6 +537,15 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
                 result = sf.query_more(result["nextRecordsUrl"], identifier_is_url=True)
 
             set_rows(total)
+        # Record this date window as done so future runs skip it
+        try:
+            client.insert(
+                f"{CH_DATABASE}.ingestion_state",
+                [[state_key, "SetupAuditTrail", since_dt.date(), total]],
+                column_names=["log_file_id", "event_type", "log_date", "row_count"],
+            )
+        except Exception as e:
+            print(f"  [warn] Failed to record ingestion state for {state_key}: {e}")
         print(f"  Inserted {total} record(s) into {table}")
         return 1, total, 0
     except Exception as e:
