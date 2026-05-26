@@ -65,7 +65,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-librechat_rag}
       POSTGRES_USER: ${POSTGRES_USER:-rag_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-librechat_rag_internal}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks: [sf-obs]

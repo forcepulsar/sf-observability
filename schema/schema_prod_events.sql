@@ -3,6 +3,11 @@
 -- Run via: ./schema/setup.sh <host> <password> [database]
 -- Database must already exist before running this file.
 --
+-- ⚠️  KEEP IN SYNC WITH ingest.py
+-- Every time a column_map entry is added/changed in ingest/ingest.py,
+-- the corresponding CREATE TABLE here must be updated in the same commit.
+-- Drift between these two files causes silent data loss on fresh installs.
+--
 -- Engine: ReplacingMergeTree(ingested_at) deduplicates on re-ingest.
 -- ClickHouse Cloud maps this to SharedReplacingMergeTree automatically.
 -- ORDER BY (timestamp, request_id) matches the ingest deduplication key.

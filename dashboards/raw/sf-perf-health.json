@@ -2484,7 +2484,29 @@
         },
         "fieldConfig": {
           "defaults": {},
-          "overrides": []
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Billable Calls" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Total Calls" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Errors" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            }
+          ]
         },
         "targets": [
           {
@@ -2524,7 +2546,29 @@
         },
         "fieldConfig": {
           "defaults": {},
-          "overrides": []
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Billable Calls" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Total Calls" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Errors" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            }
+          ]
         },
         "targets": [
           {
@@ -2573,6 +2617,14 @@
               },
               "properties": [
                 {
+                  "id": "unit",
+                  "value": "short"
+                },
+                {
+                  "id": "decimals",
+                  "value": 0
+                },
+                {
                   "id": "custom.displayMode",
                   "value": "color-background"
                 },
@@ -2592,6 +2644,20 @@
                     ]
                   }
                 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Total Calls" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Distinct Users" },
+              "properties": [
+                { "id": "unit", "value": "short" },
+                { "id": "decimals", "value": 0 }
               ]
             }
           ]
