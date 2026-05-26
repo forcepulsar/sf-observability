@@ -850,13 +850,15 @@ def record_ingestion(client, log_file_id: str, event_type: str, log_date: str, r
     )
 
 
-def _insert_batch(client, table: str, rows: list[dict]):
+def _insert_batch(client, table: str, rows: list[dict]) -> int:
+    """Insert a batch of rows. Returns number of rows skipped due to errors."""
     if not rows:
-        return
+        return 0
     columns = list(rows[0].keys())
     data = [[r[c] for c in columns] for r in rows]
     try:
         client.insert(f"{CH_DATABASE}.{table}", data, column_names=columns)
+        return 0
     except Exception as e:
         log.warning(f"  Batch insert failed ({e}), retrying row-by-row…")
         skipped = 0
@@ -867,13 +869,15 @@ def _insert_batch(client, table: str, rows: list[dict]):
                 skipped += 1
         if skipped:
             log.warning(f"  Skipped {skipped} bad row(s) in {table}")
+        return skipped
 
 
 # ---------------------------------------------------------------------------
 # Per-file ingestion
 # ---------------------------------------------------------------------------
 
-def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = None) -> int:
+def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = None,
+                smoke: bool = False) -> int:
     """Download one EventLogFile CSV and insert rows into the appropriate ClickHouse table."""
     log_file_id = file_meta["Id"]
     table = cfg["table"]
@@ -916,22 +920,31 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
             reader = csv.DictReader(fh)
             rows = []
             total = 0
+            skipped = 0
 
             for raw in reader:
                 rows.append(parse_row(raw, log_file_id, cfg, user_map))
+                if smoke and total + len(rows) >= 10:
+                    # Smoke test: stop after 10 rows — enough to verify permissions + mapping
+                    skipped += _insert_batch(client, table, rows)
+                    total += len(rows)
+                    rows = []
+                    break
                 if len(rows) >= BATCH_SIZE:
-                    _insert_batch(client, table, rows)
+                    skipped += _insert_batch(client, table, rows)
                     total += len(rows)
                     rows = []
 
             if rows:
-                _insert_batch(client, table, rows)
+                skipped += _insert_batch(client, table, rows)
                 total += len(rows)
     finally:
         os.unlink(tmp.name)
 
-    record_ingestion(client, log_file_id, file_meta["EventType"], file_meta["LogDate"], total)
-    return total
+    if not smoke:
+        # Don't record smoke runs — they should always re-test on next invocation
+        record_ingestion(client, log_file_id, file_meta["EventType"], file_meta["LogDate"], total)
+    return total, skipped
 
 
 # ---------------------------------------------------------------------------
@@ -976,22 +989,23 @@ def sync_users(sf, client):
 
 def main():
     args = sys.argv[1:]
-    backfill = "--backfill" in args
+    backfill  = "--backfill" in args
+    smoke     = "--smoke"    in args   # quick validation: 1 file, 10 rows per event type
     org_alias = next((a for a in args if not a.startswith("--")), SF_ORG_ALIAS)
 
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_types = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
-    # P1: Prevent concurrent runs — two containers starting simultaneously (observed
-    # as close as 67ms apart) both pass the already_ingested() check before either
-    # has recorded state, causing every file to be inserted twice.
-    lock_path = Path(os.getenv("LOCK_FILE", "/tmp/sf_ingest.lock"))
-    lock_fh = open(lock_path, "w")
-    try:
-        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-        log.warning("Another ingest process is already running — exiting to avoid duplicates.")
-        sys.exit(0)
+    # P1: Prevent concurrent runs (skip lock for smoke tests — they are read-heavy
+    # and safe to run alongside a live ingest cycle).
+    if not smoke:
+        lock_path = Path(os.getenv("LOCK_FILE", "/tmp/sf_ingest.lock"))
+        lock_fh = open(lock_path, "w")
+        try:
+            fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            log.warning("Another ingest process is already running — exiting to avoid duplicates.")
+            sys.exit(0)
 
     validate_config()
 
@@ -1037,18 +1051,26 @@ def main():
             secure=True, compress=True,
         )
 
+    smoke_results: list[tuple[str, bool, int, str]] = []
+
     def process_event_type(event_type, cfg):
         if only_types and event_type not in only_types:
             return 0, 0, 0
         interval = "Daily" if backfill else cfg["interval"]
-        # Allow per-event-type limit override (e.g. hourly ApiTotalUsage has 2 sequences/hour)
-        default_limit = 90 if backfill else cfg.get("limit_override", 24)
-        limit = default_limit
+        if smoke:
+            limit = 1
+        else:
+            # Allow per-event-type limit override (e.g. hourly ApiTotalUsage has 2 sequences/hour)
+            limit = 90 if backfill else cfg.get("limit_override", 24)
         thread_client = _make_ch_client()
 
         # P4: explicit date-range filter in normal mode so the intent is unambiguous
         # and gaps can't occur silently if > limit files exist (e.g. after an outage).
-        if backfill:
+        # Smoke test: no date filter — always fetch the single most recent file regardless of age.
+        if smoke:
+            mode_label  = "smoke (most recent file)"
+            date_filter = ""
+        elif backfill:
             mode_label  = "backfill (daily, last 90)"
             date_filter = ""
         else:
@@ -1078,9 +1100,12 @@ def main():
         if not files:
             return 0, 0, 0
 
-        done      = already_ingested(thread_client, [f["Id"] for f in files])
-        new_files = [f for f in files if f["Id"] not in done]
-        log.info(f"[{event_type}] {len(done)} already ingested, {len(new_files)} new")
+        if smoke:
+            new_files = files[:1]  # always re-test most recent file, skip state check
+        else:
+            done      = already_ingested(thread_client, [f["Id"] for f in files])
+            new_files = [f for f in files if f["Id"] not in done]
+            log.info(f"[{event_type}] {len(done)} already ingested, {len(new_files)} new")
 
         type_files  = 0
         type_rows   = 0
@@ -1096,14 +1121,24 @@ def main():
                     thread_client, CH_DATABASE, run_id, "ingest",
                     event_type, "elf", f["Id"], log_date,
                 ) as set_rows:
-                    row_count = ingest_file(sf, thread_client, f, cfg, user_map)
+                    row_count, row_skipped = ingest_file(sf, thread_client, f, cfg, user_map, smoke=smoke)
                     set_rows(row_count)
-                log.info(f"[{event_type}] {row_count} rows inserted")
+                if row_skipped:
+                    log.warning(f"[{event_type}] {row_count} inserted, {row_skipped} skipped (schema mismatch?)")
+                    type_errors += row_skipped
+                else:
+                    log.info(f"[{event_type}] {row_count} rows inserted")
                 type_files += 1
                 type_rows  += row_count
+                if smoke:
+                    smoke_results.append((event_type, True, row_count, ""))
             except Exception as e:
                 type_errors += 1
                 log.error(f"[{event_type}] ERROR ingesting {f['Id']}: {e}")
+                if smoke:
+                    smoke_results.append((event_type, False, 0, str(e)[:60]))
+        if smoke and not new_files:
+            smoke_results.append((event_type, True, 0, "no files available"))
         return type_files, type_rows, type_errors
 
     grand_total_files  = 0
@@ -1131,6 +1166,23 @@ def main():
     )
 
     log.info(f"\nDone. {grand_total_files} file(s), {grand_total_rows} row(s), {grand_total_errors} error(s).")
+
+    if smoke:
+        passed = [r for r in smoke_results if r[1]]
+        failed = [r for r in smoke_results if not r[1]]
+        log.info("")
+        log.info("╔══════════════════════════════════════════════════════╗")
+        log.info("║              SMOKE TEST RESULTS                      ║")
+        log.info("╠══════════════════════════════════════════════════════╣")
+        for et, ok, rows, msg in sorted(smoke_results, key=lambda x: x[0]):
+            note = f"{rows} rows" if ok and rows else (msg or "ok")
+            status = "✓" if ok else "✗"
+            log.info(f"║  {status}  {et:<36} {note}")
+        log.info("╠══════════════════════════════════════════════════════╣")
+        log.info(f"║  PASS: {len(passed)}/{len(smoke_results)}   FAIL: {len(failed):<30}║")
+        log.info("╚══════════════════════════════════════════════════════╝")
+        if failed:
+            sys.exit(1)
 
 
 if __name__ == "__main__":

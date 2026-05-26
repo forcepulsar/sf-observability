@@ -88,7 +88,7 @@ services:
       - "${GRAFANA_PORT:-3000}:3000"
     env_file: .env
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
     volumes:
       - ./dashboards/provisioning:/etc/grafana/provisioning

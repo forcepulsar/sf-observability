@@ -85,7 +85,14 @@ This starts:
 - **LibreChat** at `http://localhost:3080` — AI chat with direct ClickHouse access via MCP
 - **Supporting services** — MongoDB, Meilisearch, pgvector (all for LibreChat)
 
-**4. Trigger initial ingest**
+**4. Confirm Salesforce user permissions**
+
+The Salesforce user configured in `.env` needs these permissions:
+- **View Event Log Files** — required to access EventLogFile data (comes with Event Monitoring add-on)
+- **View Setup and Configuration** — required to read `ProfileId` on the User object; without this the ingest crashes on startup
+- **API Enabled** — standard requirement for any API integration
+
+**5. Trigger initial ingest**
 
 ```bash
 docker compose exec ingest python3 /app/ingest.py
@@ -96,7 +103,7 @@ docker compose exec ingest python3 /app/ingest_threat_store.py
 
 | Dashboard | What it shows |
 |---|---|
-| **SF API Performance** | API call volume vs 820K daily limit, billable vs non-billable, top connected apps |
+| **SF API Performance** | API call volume vs your daily API limit, billable vs non-billable, top connected apps |
 | **Logins — Salesforce Prod** | Login activity by status, source IP, browser/user-agent, success/failure ratio |
 | **Security Events** | Threat detection events — credential stuffing, session hijacking, anomalies |
 | **SF Ops Health** | Setup audit trail, permission changes, admin activity |
@@ -124,8 +131,8 @@ A template with the expected columns is at `schema/connected_app_registry_exampl
 
 ```
 connected_app_id,app_name,category,notes
-8883i000001R3QM,Amazon AppFlow Embedded Login App,Data Integration,Continuous 24/7 polling...
-0H4Uy0000000cGb,Gearset Deploy,DevTools,
+8883i000001XXXXX,Your App Name Here,Data Integration,888-prefix: contact SF Support to identify
+0H4Uy0000XXXXXXX,Another App,DevTools,0H4-prefix: look up in SF Setup → Apps → Connected Apps
 ```
 
 ### What happens when an app is unknown
@@ -150,8 +157,8 @@ SELECT
     min(toDate(t.timestamp)) AS first_seen,
     max(toDate(t.timestamp)) AS last_seen,
     groupArray(3)(DISTINCT t.client_ip) AS sample_ips
-FROM salesforceProd.api_total_usage_events t FINAL
-LEFT JOIN salesforceProd.connected_app_registry r FINAL
+FROM api_total_usage_events t FINAL
+LEFT JOIN connected_app_registry r FINAL
     ON t.connected_app_id = r.connected_app_id
 WHERE t.timestamp >= now() - INTERVAL 30 DAY
   AND t.connected_app_id != ''
