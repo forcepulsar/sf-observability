@@ -347,6 +347,8 @@ CREATE TABLE IF NOT EXISTS salesforceProd.users
     department    String,
     user_type     LowCardinality(String),
     is_active     UInt8,
+    profile_id    String DEFAULT '',
+    profile_name  String DEFAULT '',
     synced_at     DateTime DEFAULT now()
 )
 ENGINE = ReplacingMergeTree(synced_at)
