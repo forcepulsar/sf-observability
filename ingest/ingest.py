@@ -675,6 +675,8 @@ CONFIG: dict[str, dict] = {
     # Salesforce generates 2 Sequence files per hour for high-volume orgs,
     # so limit_override=50 ensures we capture all sequences for the last 24h.
     # ReplacingMergeTree deduplicates overlap with the daily file automatically.
+    # backfill_as_hourly=True preserves Hourly interval during --backfill runs.
+    # backfill_limit_override=500 fetches ~10 days of hourly files per backfill run.
     # ------------------------------------------------------------------
     "ApiTotalUsageHourly": {
         "table": "api_total_usage_events",
@@ -702,6 +704,8 @@ CONFIG: dict[str, dict] = {
         "numeric_cols": ["status_code", "counts_against_api_limit"],
         "interval": "Hourly",
         "limit_override": 50,
+        "backfill_as_hourly": True,
+        "backfill_limit_override": 500,
     },
 
     # ------------------------------------------------------------------
@@ -1056,12 +1060,15 @@ def main():
     def process_event_type(event_type, cfg):
         if only_types and event_type not in only_types:
             return 0, 0, 0
-        interval = "Daily" if backfill else cfg["interval"]
+        interval = cfg["interval"] if (backfill and cfg.get("backfill_as_hourly")) else ("Daily" if backfill else cfg["interval"])
         if smoke:
             limit = 1
+        elif backfill:
+            # Hourly event types need a larger limit per backfill run — 2 sequences/hour × 24h × days
+            limit = cfg.get("backfill_limit_override", 90)
         else:
             # Allow per-event-type limit override (e.g. hourly ApiTotalUsage has 2 sequences/hour)
-            limit = 90 if backfill else cfg.get("limit_override", 24)
+            limit = cfg.get("limit_override", 24)
         thread_client = _make_ch_client()
 
         # P4: explicit date-range filter in normal mode so the intent is unambiguous
