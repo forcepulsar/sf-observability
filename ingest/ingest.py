@@ -1000,9 +1000,10 @@ def main():
     only_flag = next((a for a in args if a.startswith("--only=")), None)
     only_types = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
-    # P1: Prevent concurrent runs (skip lock for smoke tests — they are read-heavy
-    # and safe to run alongside a live ingest cycle).
-    if not smoke:
+    # P1: Prevent concurrent runs (skip lock for smoke tests and targeted backfills
+    # — both are safe to run alongside a live cycle; backfill uses --only to scope
+    # to a single event type and already_ingested() prevents double-writing).
+    if not smoke and not (backfill and only_types):
         lock_path = Path(os.getenv("LOCK_FILE", "/tmp/sf_ingest.lock"))
         lock_fh = open(lock_path, "w")
         try:
