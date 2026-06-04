@@ -28,6 +28,9 @@ groups:
           team: security
         data:
           - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
@@ -65,6 +68,9 @@ groups:
           team: security
         data:
           - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
@@ -97,6 +103,9 @@ groups:
           team: security
         data:
           - refId: A
+            relativeTimeRange:
+              from: 900
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
@@ -129,6 +138,9 @@ groups:
           team: security
         data:
           - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
@@ -166,6 +178,9 @@ groups:
           team: ops
         data:
           - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
@@ -196,6 +211,9 @@ groups:
           team: ops
         data:
           - refId: A
+            relativeTimeRange:
+              from: 86400
+              to: 0
             datasourceUid: CLICKHOUSE_DS_UID
             model:
               rawSql: |
