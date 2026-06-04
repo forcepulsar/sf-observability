@@ -2,7 +2,7 @@
 
 This guide walks you through a complete setup of the sf-observability stack: Salesforce EventLogFile ingestion into ClickHouse Cloud, with Grafana dashboards for visual analysis and LibreChat for AI-native investigation via natural language.
 
-Estimated setup time: 20 minutes. Prerequisites: Docker Desktop, a ClickHouse Cloud cluster, and a Salesforce org with Event Monitoring enabled.
+Estimated setup time: 25 minutes. Prerequisites: Docker Desktop, a ClickHouse Cloud cluster, a Salesforce org with Event Monitoring enabled, and Java + OpenSSL installed locally.
 
 For full documentation, see [README.md](README.md).
 
@@ -18,7 +18,7 @@ For full documentation, see [README.md](README.md).
 
 ---
 
-## Step 1 — Clone and copy the config template (2 min)
+## Step 1 — Clone and copy the config template
 
 ```bash
 git clone https://github.com/forcepulsar/sf-observability.git
@@ -28,7 +28,7 @@ cp .env.example .env
 
 ---
 
-## Step 2 — Create the ClickHouse schema (2 min)
+## Step 2 — Create the ClickHouse schema
 
 Run the setup script (it creates the database, substitutes the name, and applies both schema files):
 
@@ -42,7 +42,7 @@ You should see `✓ Schema setup complete for: salesforceProd`.
 
 ---
 
-## Step 3 — Create a Salesforce ingest user (3 min)
+## Step 3 — Create a Salesforce ingest user
 
 In Salesforce Setup:
 1. **Setup → Users → New User** — create a dedicated user (e.g. `sf-obs-ingest@yourorg.com`)
@@ -55,41 +55,55 @@ Don't reuse an existing admin account — a dedicated user keeps API attribution
 
 ---
 
-## Step 4 — Generate a certificate (1 min)
+## Step 4 — Create the certificate in Salesforce
 
-```bash
-mkdir -p cert
-openssl req -x509 -newkey rsa:2048 \
-  -keyout cert/server.key \
-  -out cert/server.crt \
-  -days 365 -nodes \
-  -subj "/CN=sf-observability"
-```
-
-This creates the private key (`cert/server.key`) and the certificate (`cert/server.crt`).
+1. **Setup → Certificate and Key Management → Create Self-Signed Certificate**
+2. Fill in:
+   - **Label:** e.g. `sf_observability_prod_2026` — use underscores (this becomes the JKS alias)
+   - **Key Size:** `2048`
+   - Check **Exportable Private Key**
+3. Save → click the cert label → **Download Certificate** → save the `.crt` file
 
 ---
 
-## Step 5 — Create the External Client App in Salesforce (5 min)
+## Step 5 — Create the External Client App and upload the certificate
 
 1. **Setup → Apps → External Client Apps → New External Client App**
 2. Fill in App Name and Contact Email
 3. Under **OAuth Settings**:
-   - Enable OAuth, add scope **Manage user data via APIs (api)**
-   - Check **Use digital signatures**, upload `cert/server.crt`
+   - Enable OAuth, add scopes: **Manage user data via APIs (api)** and **Perform requests at any time (refresh_token, offline_access)**
+   - Check **Use digital signatures**, upload the `.crt` downloaded in Step 4
 4. Save and copy the **Consumer Key**
-5. Click **Manage → Edit Policies**, set **Permitted Users** to **Admin approved users are pre-authorized**
-6. Click **Manage Users → Add** and add your ingest user
+5. Click **OAuth Policies**, set **Permitted Users** to **Admin approved users are pre-authorized**
+6. Click **App Policies** and add integration user permission set or profile
 
 ---
 
-## Step 6 — Fill in .env (3 min)
+## Step 6 — Export the keystore and extract the private key
+
+Now that the ECA is configured and you have the Consumer Key, export the keystore:
+
+1. **Setup → Certificate and Key Management → Export to Keystore** → set a password → download the `.jks` file
+
+Then run the helper script (requires Java and OpenSSL):
+
+```bash
+./scripts/extract-sf-cert-key.sh <org-id>.jks sf_observability_prod_2026 sf-observability
+```
+
+When prompted about the JWT login test, answer **y** — you now have everything needed (Consumer Key from Step 5, username, instance URL).
+
+> **Sandbox users:** As of Salesforce Winter '26, `test.salesforce.com` no longer works. Always use the org-specific My Domain URL (e.g. `https://yourorg--sandbox.sandbox.my.salesforce.com`) as `SF_INSTANCE_URL`.
+
+---
+
+## Step 7 — Fill in .env (3 min)
 
 Open `.env` in a text editor and fill in these sections:
 
 ```bash
 # Salesforce
-SF_JWT_CLIENT_ID=<Consumer Key from step 5>
+SF_JWT_CLIENT_ID=<Consumer Key from step 5>  # from ECA → Manage Consumer Details
 SF_JWT_KEY_FILE=/app/cert/server.key     # don't change — this is the in-container path
 SF_JWT_USERNAME=sf-obs-ingest@yourorg.com
 SF_INSTANCE_URL=https://yourorg.my.salesforce.com
@@ -118,7 +132,7 @@ GRAFANA_ADMIN_PASSWORD=change-me
 
 ---
 
-## Step 7 — Start the stack (2 min)
+## Step 8 — Start the stack (2 min)
 
 ```bash
 docker compose up -d
@@ -134,15 +148,19 @@ All services should show `running`.
 
 ---
 
-## Step 8 — Trigger the first ingest (1 min)
+## Step 9 — Trigger the first ingest (1 min)
 
-The ingest container runs automatically on an hourly schedule, but trigger it now to get data immediately:
+The ingest container runs automatically every 6 hours, but trigger it now to get data immediately:
 
 ```bash
+# Pull the last 24 hours of EventLogFile data (1–10 min depending on event volume)
 docker compose exec ingest python3 /app/ingest.py
+
+# Pull threat detection events (credential stuffing, session hijacking, anomalies)
+docker compose exec ingest python3 /app/ingest_threat_store.py
 ```
 
-This pulls the last 24 hours of EventLogFile data. Depending on your event volume it takes 1–10 minutes. Watch progress with:
+Watch progress with:
 
 ```bash
 docker compose logs ingest -f
@@ -150,16 +168,16 @@ docker compose logs ingest -f
 
 ---
 
-## Step 9 — Open Grafana (1 min)
+## Step 10 — Open Grafana (1 min)
 
 Go to [http://localhost:3000](http://localhost:3000). Log in with `admin` / your `GRAFANA_ADMIN_PASSWORD`.
 
-The 9 dashboards are pre-provisioned under the **Salesforce** folder:
-- **Logins — Salesforce Prod** — start here to see login activity
-- **SF API Performance** — API usage vs your daily limit, broken down by connected app
-- **Security Events** — credential stuffing, session hijacking, anomaly detection
-- **SF Ops Health** — SetupAuditTrail, permission changes, admin activity
-- **Ingestion Monitor** — pipeline health and row counts per run
+The 10 dashboards are pre-provisioned under the **Salesforce** folder:
+- **Logins - Salesforce Prod** — start here to see login activity
+- **Salesforce - API Performance** — API usage vs your daily limit, broken down by connected app
+- **Salesforce - Security Events** — credential stuffing, session hijacking, anomaly detection
+- **Salesforce - Operational Health** — SetupAuditTrail, permission changes, admin activity
+- **Salesforce - Ingestion Pipeline Monitor** — pipeline health and row counts per run
 
 ---
 
@@ -180,6 +198,6 @@ The 9 dashboards are pre-provisioned under the **Salesforce** folder:
 | Symptom | Fix |
 |---|---|
 | `docker compose logs ingest` shows auth error | Check `SF_JWT_CLIENT_ID`, `SF_JWT_KEY_FILE`, and that the ingest user is pre-authorized on the ECA |
-| Grafana shows "No data" | Run the ingest manually (Step 8) and verify ClickHouse Block 2 variables in `.env` |
+| Grafana shows "No data" | Run the ingest manually (Step 9) and verify ClickHouse Block 2 variables in `.env` |
 | Schema setup fails | Ensure `CH_HOST` has `https://` and the password has no special shell characters |
-| `cert/server.key: No such file or directory` | Run Step 4 — the cert directory must exist before `docker compose up` |
+| `cert/server.key: No such file or directory` | Complete Step 6 — export the JKS from Salesforce and run the extraction script before `docker compose up` |
