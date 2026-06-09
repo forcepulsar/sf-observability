@@ -336,7 +336,7 @@ CONFIG: dict[str, dict] = {
             "SUCCESS":           "status",
         },
         "numeric_cols": ["rows_processed"],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -362,7 +362,7 @@ CONFIG: dict[str, dict] = {
             "ERROR_MESSAGE":      "error_message",
         },
         "numeric_cols": ["rows_processed", "records_failed"],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------

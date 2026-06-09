@@ -396,6 +396,8 @@ Salesforce Support logging into a customer org. Different CSV schema from `Login
 | `PACKAGE_NAMESPACE` | `package_namespace` |
 | `PACKAGE_VERSION_ID` | `package_version_id` |
 | `INSTALL_TYPE` | `install_type` |
+| *(added by ingest)* | `log_file_id` |
+| *(added by ingest)* | `ingested_at` |
 
 ---
 
