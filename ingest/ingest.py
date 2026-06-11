@@ -1034,7 +1034,12 @@ def main():
     )
     log.info(f"  Connected to {CH_HOST}:{CH_PORT}/{CH_DATABASE}")
 
-    sync_users(sf, client)
+    # Non-fatal: user sync uses a separate auth path that can expire independently.
+    # On failure the run continues with the cached users table in ClickHouse.
+    try:
+        sync_users(sf, client)
+    except Exception as e:
+        log.warning(f"  [warn] sync_users failed (skipping): {e}")
 
     log.info("Building user lookup map…")
     user_result = client.query(
