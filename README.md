@@ -64,8 +64,7 @@ The setup order matters: create the Salesforce certificate first, configure the 
 | **Salesforce - Page Performance** | Page/endpoint performance, slow requests |
 | **Salesforce Performance & Health** | Apex execution, trigger performance, Flow execution |
 | **Threats & Access** | Login-as activity (admin impersonation), threat store events |
-| **Salesforce - Ingestion Pipeline Monitor** | Pipeline health — rows ingested per run, last run time |
-| **Ingestion Pipeline Health** | Container-level ingest health and error tracking |
+| **Ingestion Pipeline Health** | Pipeline status, ingested log files per event type, run diagnostics and error tracking |
 
 ## Connected app registry
 

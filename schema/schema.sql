@@ -9,11 +9,15 @@ CREATE TABLE IF NOT EXISTS salesforceFull.ingestion_state
     log_file_id   String,
     event_type    String,
     log_date      Date,
+    interval      LowCardinality(String),
     row_count     UInt32,
     ingested_at   DateTime DEFAULT now()
 )
 ENGINE = ReplacingMergeTree()
 ORDER BY log_file_id;
+
+-- Migration: add interval column to existing installations (idempotent)
+ALTER TABLE salesforceFull.ingestion_state ADD COLUMN IF NOT EXISTS interval LowCardinality(String) DEFAULT '';
 
 -- Main login events table
 CREATE TABLE IF NOT EXISTS salesforceFull.login_events
