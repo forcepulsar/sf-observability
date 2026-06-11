@@ -1,67 +1,148 @@
 {
   "uid": "sf-ingest-health",
   "title": "Ingestion Pipeline Health",
-  "tags": ["ingestion", "ops"],
+  "tags": [
+    "ingestion",
+    "ops"
+  ],
   "timezone": "browser",
   "refresh": "1m",
   "schemaVersion": 38,
-  "time": { "from": "now-14d", "to": "now" },
+  "time": {
+    "from": "now-14d",
+    "to": "now"
+  },
   "panels": [
-
     {
       "id": 1,
       "type": "text",
       "title": "",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 2 },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 2
+      },
       "options": {
         "mode": "markdown",
-        "content": "## How this works\nThe pipeline runs **every 6 hours**. It has two steps: **① Event Logs** (pulls login, API, Apex, etc. from Salesforce — takes ~30 min) then **② Threats & Audit** (pulls Shield detections and config changes — takes ~1 min). Between runs it sleeps. If the laptop sleeps/reboots, the sleep gets stuck and the pipeline won't run again until restarted."
+        "content": "## How this works\nThe pipeline runs **every 6 hours**. It has two steps: **\u2460 Event Logs** (pulls login, API, Apex, etc. from Salesforce \u2014 takes ~30 min) then **\u2461 Threats & Audit** (pulls Shield detections and config changes \u2014 takes ~1 min). Between runs it sleeps. If the laptop sleeps/reboots, the sleep gets stuck and the pipeline won't run again until restarted."
       }
     },
-
     {
       "id": 2,
       "type": "stat",
       "title": "Pipeline Status",
       "description": "Green = sleeping normally. Yellow = overdue (sleep may be stuck). Red = hasn't run in 24h+.",
-      "gridPos": { "x": 0, "y": 2, "w": 5, "h": 5 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 5,
+        "h": 5
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "textMode": "value",
         "orientation": "auto",
-        "text": { "valueSize": 28 }
+        "text": {
+          "valueSize": 28
+        }
       },
       "fieldConfig": {
         "defaults": {
           "unit": "none",
           "mappings": [
-            { "type": "range", "options": { "from": -9999, "to": 0,   "result": { "text": "RUNNING NOW",    "color": "blue",   "index": 0 } } },
-            { "type": "range", "options": { "from": 0,     "to": 360, "result": { "text": "SLEEPING OK",    "color": "green",  "index": 1 } } },
-            { "type": "range", "options": { "from": 360,   "to": 720, "result": { "text": "OVERDUE",        "color": "yellow", "index": 2 } } },
-            { "type": "range", "options": { "from": 720,   "to": 9999999, "result": { "text": "STUCK — RESTART", "color": "red", "index": 3 } } }
+            {
+              "type": "range",
+              "options": {
+                "from": -9999,
+                "to": 0,
+                "result": {
+                  "text": "RUNNING NOW",
+                  "color": "blue",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 0,
+                "to": 360,
+                "result": {
+                  "text": "SLEEPING OK",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 360,
+                "to": 720,
+                "result": {
+                  "text": "OVERDUE",
+                  "color": "yellow",
+                  "index": 2
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 720,
+                "to": 9999999,
+                "result": {
+                  "text": "STUCK \u2014 RESTART",
+                  "color": "red",
+                  "index": 3
+                }
+              }
+            }
           ]
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT dateDiff('minute', max(ended_at), now()) AS minutes_since_last_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 3,
       "type": "stat",
       "title": "Next Run",
       "description": "When the next ingest cycle is expected to start. If this shows 'ago', the pipeline is stuck.",
-      "gridPos": { "x": 5, "y": 2, "w": 5, "h": 5 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 5,
+        "y": 2,
+        "w": 5,
+        "h": 5
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "value",
         "textMode": "auto",
         "orientation": "auto"
@@ -72,31 +153,53 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red",    "value": null },
-              { "color": "green",  "value": 1700000000000 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1700000000000
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 21600)) * 1000 AS next_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 4,
       "type": "stat",
-      "title": "① Event Logs — Last Run",
+      "title": "\u2460 Event Logs \u2014 Last Run",
       "description": "How long ago the main event log ingest (logins, API, Apex, etc.) last completed successfully.",
-      "gridPos": { "x": 10, "y": 2, "w": 5, "h": 5 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 10,
+        "y": 2,
+        "w": 5,
+        "h": 5
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "textMode": "auto"
       },
@@ -106,32 +209,57 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green",  "value": null },
-              { "color": "yellow", "value": 1700000000000 },
-              { "color": "red",    "value": 1700086400000 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1700000000000
+              },
+              {
+                "color": "red",
+                "value": 1700086400000
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 5,
       "type": "stat",
-      "title": "② Threats & Audit — Last Run",
+      "title": "\u2461 Threats & Audit \u2014 Last Run",
       "description": "How long ago the Shield threat detections and SetupAuditTrail sync last completed.",
-      "gridPos": { "x": 15, "y": 2, "w": 5, "h": 5 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 15,
+        "y": 2,
+        "w": 5,
+        "h": 5
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "textMode": "auto"
       },
@@ -141,55 +269,97 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green",  "value": null },
-              { "color": "yellow", "value": 1700000000000 },
-              { "color": "red",    "value": 1700086400000 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1700000000000
+              },
+              {
+                "color": "red",
+                "value": 1700086400000
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT toUnixTimestamp(max(ended_at)) * 1000 AS last_run FROM ingestion_runs WHERE script = 'ingest_threat_store' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 6,
       "type": "stat",
       "title": "Total Events in ClickHouse",
-      "gridPos": { "x": 20, "y": 2, "w": 4, "h": 5 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 20,
+        "y": 2,
+        "w": 4,
+        "h": 5
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "value",
         "textMode": "auto"
       },
       "fieldConfig": {
-        "defaults": { "unit": "short", "decimals": 0 }
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT sum(rows_total) AS total FROM ingestion_runs WHERE status IN ('success','partial')",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 7,
       "type": "stat",
       "title": "Currently Ingesting?",
       "description": "Shows how long ago the last individual file was processed. Under 10 minutes = a run is actively in progress right now.",
-      "gridPos": { "x": 0, "y": 7, "w": 6, "h": 4 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "textMode": "value_and_name"
       },
@@ -198,70 +368,144 @@
           "unit": "none",
           "displayName": "Last file processed",
           "mappings": [
-            { "type": "range", "options": { "from": 0,  "to": 10,  "result": { "text": "YES — ingesting now", "color": "blue",  "index": 0 } } },
-            { "type": "range", "options": { "from": 10, "to": 9999999, "result": { "text": "No — sleeping",     "color": "green", "index": 1 } } }
+            {
+              "type": "range",
+              "options": {
+                "from": 0,
+                "to": 10,
+                "result": {
+                  "text": "YES \u2014 ingesting now",
+                  "color": "blue",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "from": 10,
+                "to": 9999999,
+                "result": {
+                  "text": "No \u2014 sleeping",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
           ]
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT dateDiff('minute', max(started_at), now()) AS minutes_since_last_file FROM ingestion_events",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 8,
       "type": "stat",
-      "title": "Rows Loaded — Last Run",
-      "gridPos": { "x": 6, "y": 7, "w": 6, "h": 4 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "title": "Rows Loaded \u2014 Last Run",
+      "gridPos": {
+        "x": 6,
+        "y": 7,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "value",
         "textMode": "auto"
       },
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT rows_total FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 9,
       "type": "stat",
-      "title": "Duration — Last Run",
-      "gridPos": { "x": 12, "y": 7, "w": 6, "h": 4 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "title": "Duration \u2014 Last Run",
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "value",
         "textMode": "auto"
       },
-      "fieldConfig": { "defaults": { "unit": "m", "decimals": 1 } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "decimals": 1
+        }
+      },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT round(duration_ms / 60000, 1) AS minutes FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 10,
       "type": "stat",
-      "title": "Errors — Last Run",
-      "gridPos": { "x": 18, "y": 7, "w": 6, "h": 4 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "title": "Errors \u2014 Last Run",
+      "gridPos": {
+        "x": 18,
+        "y": 7,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
         "colorMode": "background",
         "textMode": "auto"
       },
@@ -271,104 +515,85 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red",   "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT errors FROM ingestion_runs WHERE script = 'ingest' ORDER BY started_at DESC LIMIT 1",
           "format": "table"
         }
       ]
     },
-
     {
       "id": 11,
       "type": "barchart",
-      "title": "Rows Loaded Per Run — Last 14 Days",
+      "title": "Rows Loaded Per Run \u2014 Last 14 Days",
       "description": "Each bar is one ingest cycle. Big bars = lots of catchup (e.g. after laptop was off). Small bars = normal incremental run.",
-      "gridPos": { "x": 0, "y": 11, "w": 24, "h": 8 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
       "options": {
         "xField": "started_at",
         "orientation": "auto",
-        "tooltip": { "mode": "single" },
-        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
         "colorByField": "script"
       },
       "fieldConfig": {
-        "defaults": { "unit": "short" },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "ingest" },            "properties": [{ "id": "displayName", "value": "① Event Logs" }] },
-          { "matcher": { "id": "byName", "options": "ingest_threat_store" },"properties": [{ "id": "displayName", "value": "② Threats & Audit" }] }
-        ]
-      },
-      "targets": [
-        {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-          "rawSql": "SELECT started_at, rows_total, script FROM ingestion_runs WHERE $__timeFilter(started_at) ORDER BY started_at ASC",
-          "format": "table"
-        }
-      ]
-    },
-
-    {
-      "id": 12,
-      "type": "table",
-      "title": "Run History",
-      "description": "All recent runs. Status is green = success, yellow = partial (some files skipped), red = error.",
-      "gridPos": { "x": 0, "y": 19, "w": 24, "h": 9 },
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
-      "options": {
-        "sortBy": [{ "displayName": "Started", "desc": true }],
-        "footer": { "show": false }
-      },
-      "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "status" },
+            "matcher": {
+              "id": "byName",
+              "options": "ingest"
+            },
             "properties": [
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "custom.width", "value": 120 },
               {
-                "id": "mappings",
-                "value": [{
-                  "type": "value",
-                  "options": {
-                    "success": { "color": "green",  "index": 0, "text": "success" },
-                    "partial": { "color": "yellow", "index": 1, "text": "partial" },
-                    "error":   { "color": "red",    "index": 2, "text": "error" }
-                  }
-                }]
+                "id": "displayName",
+                "value": "\u2460 Event Logs"
               }
             ]
           },
-          { "matcher": { "id": "byName", "options": "duration_ms" },  "properties": [{ "id": "unit", "value": "ms" },    { "id": "displayName", "value": "Duration" },  { "id": "custom.width", "value": 120 }] },
-          { "matcher": { "id": "byName", "options": "rows_total" },   "properties": [{ "id": "unit", "value": "short" }, { "id": "displayName", "value": "Rows Loaded" }, { "id": "custom.width", "value": 130 }] },
-          { "matcher": { "id": "byName", "options": "files_total" },  "properties": [{ "id": "displayName", "value": "Files" }, { "id": "custom.width", "value": 80 }] },
-          { "matcher": { "id": "byName", "options": "errors" },       "properties": [{ "id": "displayName", "value": "Errors" }, { "id": "custom.width", "value": 80 }] },
-          { "matcher": { "id": "byName", "options": "started_at" },   "properties": [{ "id": "displayName", "value": "Started" }, { "id": "unit", "value": "dateTimeAsLocal" }] },
-          { "matcher": { "id": "byName", "options": "ended_at" },     "properties": [{ "id": "displayName", "value": "Ended" },   { "id": "unit", "value": "dateTimeAsLocal" }] },
           {
-            "matcher": { "id": "byName", "options": "script" },
+            "matcher": {
+              "id": "byName",
+              "options": "ingest_threat_store"
+            },
             "properties": [
-              { "id": "displayName", "value": "Step" },
-              { "id": "custom.width", "value": 180 },
               {
-                "id": "mappings",
-                "value": [{
-                  "type": "value",
-                  "options": {
-                    "ingest":             { "text": "① Event Logs",      "index": 0 },
-                    "ingest_threat_store":{ "text": "② Threats & Audit", "index": 1 }
-                  }
-                }]
+                "id": "displayName",
+                "value": "\u2461 Threats & Audit"
               }
             ]
           }
@@ -376,12 +601,647 @@
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "cfgz0zrjwhudcc" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT started_at, rows_total, script FROM ingestion_runs WHERE $__timeFilter(started_at) ORDER BY started_at ASC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 2
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Ingested Log Files\nShows the most-recent ingested file per event type \u2014 equivalent to browsing the Salesforce Event Log File Browser. `log_date` is the date/hour the Salesforce log covers (not when it was ingested). Use this to spot gaps: if an event type is missing from the last 24 h of expected log files, the pipeline may have skipped it."
+      }
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Ingested Log Files \u2014 Latest per Event Type",
+      "description": "One row per (event_type, log_date) pair. Shows every SF log file slot tracked in ingestion_state, newest first. interval = Hourly or Daily.",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "log_date",
+            "desc": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "interval"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "Hourly": {
+                        "text": "Hourly",
+                        "color": "blue",
+                        "index": 0
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "Daily": {
+                        "text": "Daily",
+                        "color": "purple",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hours_since_ingested"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 12
+                    },
+                    {
+                      "color": "red",
+                      "value": 26
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT event_type, argMax(interval, ingested_at) AS interval, log_date, argMax(log_file_id, ingested_at) AS latest_log_file_id, argMax(row_count, ingested_at) AS row_count, max(ingested_at) AS last_ingested_at, round(dateDiff('minute', max(ingested_at), now()) / 60.0, 1) AS hours_since_ingested FROM salesforceProd.ingestion_state FINAL GROUP BY event_type, log_date ORDER BY log_date DESC, event_type ASC LIMIT 200",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Latest Ingested File per Event Type (Summary)",
+      "description": "One row per event type \u2014 shows the most recent log file ingested and how long ago. Red = stale (>26h), yellow = overdue (>12h), green = current.",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hours_since_ingested"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 12
+                    },
+                    {
+                      "color": "red",
+                      "value": 26
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT event_type, max(log_date) AS latest_log_date, argMax(interval, ingested_at) AS interval, count() AS total_files, sum(row_count) AS total_rows, max(ingested_at) AS last_ingested_at, round(dateDiff('minute', max(ingested_at), now()) / 60.0, 1) AS hours_since_ingested FROM salesforceProd.ingestion_state FINAL GROUP BY event_type ORDER BY hours_since_ingested ASC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Run History",
+      "description": "All recent runs. Status is green = success, yellow = partial (some files skipped), red = error.",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Started",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "success": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "success"
+                      },
+                      "partial": {
+                        "color": "yellow",
+                        "index": 1,
+                        "text": "partial"
+                      },
+                      "error": {
+                        "color": "red",
+                        "index": 2,
+                        "text": "error"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "duration_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "displayName",
+                "value": "Duration"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rows_total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "displayName",
+                "value": "Rows Loaded"
+              },
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "files_total"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Files"
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "errors"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Errors"
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "started_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Started"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ended_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ended"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "script"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Step"
+              },
+              {
+                "id": "custom.width",
+                "value": 180
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ingest": {
+                        "text": "\u2460 Event Logs",
+                        "index": 0
+                      },
+                      "ingest_threat_store": {
+                        "text": "\u2461 Threats & Audit",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
           "rawSql": "SELECT script, started_at, ended_at, duration_ms, files_total, rows_total, errors, status FROM ingestion_runs ORDER BY started_at DESC LIMIT 30",
           "format": "table"
         }
       ]
+    },
+    {
+      "id": 16,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 2
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Diagnostics\nDetailed per-run and per-event-type breakdowns for debugging \u2014 run timing by script, throughput, failures and skips. (Merged from the former Ingestion Pipeline Monitor dashboard.)"
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "id": 17,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.14.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT started_at AS t, script, duration_ms / 1000.0 AS seconds\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
+          "refId": "A"
+        }
+      ],
+      "title": "Run duration (seconds) by script",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "id": 18,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.14.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT started_at AS t, script, rows_total AS rows\nFROM ingestion_runs\nWHERE $__timeFilter(started_at)\nORDER BY t",
+          "refId": "A"
+        }
+      ],
+      "title": "Rows ingested per run by script",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 12,
+        "h": 8
+      },
+      "id": 19,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.14.1",
+          "queryType": "timeseries",
+          "rawSql": "SELECT toStartOfHour(started_at) AS t, status, count() AS events\nFROM ingestion_events\nWHERE $__timeFilter(started_at)\nGROUP BY t, status\nORDER BY t",
+          "refId": "A"
+        }
+      ],
+      "title": "Events per hour by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 60,
+        "w": 12,
+        "h": 8
+      },
+      "id": 20,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.14.1",
+          "queryType": "table",
+          "rawSql": "SELECT event_type,\n       source,\n       count() AS runs,\n       sum(row_count) AS rows,\n       round(avg(duration_ms)/1000.0, 2) AS avg_sec,\n       round(max(duration_ms)/1000.0, 2) AS max_sec\nFROM ingestion_events\nWHERE status = 'success' AND $__timeFilter(started_at)\nGROUP BY event_type, source\nORDER BY avg_sec DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Duration by event type (successful runs)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 24,
+        "h": 8
+      },
+      "id": 21,
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.14.1",
+          "queryType": "table",
+          "rawSql": "SELECT started_at,\n       script,\n       event_type,\n       source,\n       status,\n       row_count,\n       error_message\nFROM ingestion_events\nWHERE status IN ('failed','skipped') AND $__timeFilter(started_at)\nORDER BY started_at DESC\nLIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent failures and skips",
+      "type": "table"
     }
-
   ]
 }

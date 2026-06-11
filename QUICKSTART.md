@@ -172,12 +172,12 @@ docker compose logs ingest -f
 
 Go to [http://localhost:3000](http://localhost:3000). Log in with `admin` / your `GRAFANA_ADMIN_PASSWORD`.
 
-The 10 dashboards are pre-provisioned under the **Salesforce** folder:
+The 9 dashboards are pre-provisioned under the **Salesforce** folder:
 - **Logins - Salesforce Prod** — start here to see login activity
 - **Salesforce - API Performance** — API usage vs your daily limit, broken down by connected app
 - **Salesforce - Security Events** — credential stuffing, session hijacking, anomaly detection
 - **Salesforce - Operational Health** — SetupAuditTrail, permission changes, admin activity
-- **Salesforce - Ingestion Pipeline Monitor** — pipeline health and row counts per run
+- **Ingestion Pipeline Health** — pipeline status, ingested log files per event type, and run diagnostics
 
 ---
 
