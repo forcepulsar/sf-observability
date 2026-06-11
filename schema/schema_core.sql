@@ -9,11 +9,15 @@ CREATE TABLE IF NOT EXISTS salesforceProd.ingestion_state
     log_file_id   String,
     event_type    String,
     log_date      Date,
+    interval      LowCardinality(String),
     row_count     UInt32,
     ingested_at   DateTime DEFAULT now()
 )
 ENGINE = ReplacingMergeTree()
 ORDER BY log_file_id;
+
+-- Migration: add interval column to existing installations (idempotent)
+ALTER TABLE salesforceProd.ingestion_state ADD COLUMN IF NOT EXISTS interval LowCardinality(String) DEFAULT '';
 
 -- Per-run summary: one row per invocation of ingest.py or ingest_threat_store.py
 CREATE TABLE IF NOT EXISTS salesforceProd.ingestion_runs

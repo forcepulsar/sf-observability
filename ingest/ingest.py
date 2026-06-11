@@ -845,12 +845,12 @@ def already_ingested(client, log_file_ids: list[str]) -> set[str]:
     return {row[0] for row in result.result_rows}
 
 
-def record_ingestion(client, log_file_id: str, event_type: str, log_date: str, row_count: int):
+def record_ingestion(client, log_file_id: str, event_type: str, log_date: str, interval: str, row_count: int):
     parsed_date = datetime.fromisoformat(log_date.replace("Z", "+00:00")).date()
     client.insert(
         f"{CH_DATABASE}.ingestion_state",
-        [[log_file_id, event_type, parsed_date, row_count]],
-        column_names=["log_file_id", "event_type", "log_date", "row_count"],
+        [[log_file_id, event_type, parsed_date, interval, row_count]],
+        column_names=["log_file_id", "event_type", "log_date", "interval", "row_count"],
     )
 
 
@@ -947,7 +947,7 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
 
     if not smoke:
         # Don't record smoke runs — they should always re-test on next invocation
-        record_ingestion(client, log_file_id, file_meta["EventType"], file_meta["LogDate"], total)
+        record_ingestion(client, log_file_id, file_meta["EventType"], file_meta["LogDate"], file_meta["Interval"], total)
     return total, skipped
 
 
