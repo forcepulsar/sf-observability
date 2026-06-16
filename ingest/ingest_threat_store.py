@@ -349,17 +349,11 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
         # Stable deduplication key: EventType + date (not a timestamp that changes each run)
         state_key = f"{object_name}_{since_dt.strftime('%Y-%m-%d')}"
 
-        # Skip if this date window was already successfully ingested
-        try:
-            already = client.query(
-                f"SELECT count() FROM {CH_DATABASE}.ingestion_state FINAL "
-                f"WHERE log_file_id = '{state_key}'"
-            )
-            if already.result_rows[0][0] > 0:
-                print(f"  [skip] already ingested ({state_key})")
-                continue
-        except Exception:
-            pass  # If the check fails, proceed with ingestion
+        # NOTE: no skip-by-state_key here. since_dt is derived from max(event_date),
+        # so the state_key always equals "the latest date we already have" — checking
+        # it would skip every run and freeze the watermark permanently. The target
+        # table is ReplacingMergeTree, so re-querying from the (overlapping) watermark
+        # each cycle is safe: boundary rows collapse on merge.
 
         soql = (
             f"SELECT {cfg['soql_fields']} FROM {object_name} "
@@ -473,17 +467,12 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
 
     print(f"\n[SetupAuditTrail] Syncing from {since_str}…")
 
-    # Skip if this date window was already successfully ingested
-    try:
-        already = client.query(
-            f"SELECT count() FROM {CH_DATABASE}.ingestion_state FINAL "
-            f"WHERE log_file_id = '{state_key}'"
-        )
-        if already.result_rows[0][0] > 0:
-            print(f"  [skip] already ingested ({state_key})")
-            return 0, 0, 0
-    except Exception:
-        pass  # If the check fails, proceed with ingestion
+    # NOTE: no skip-by-state_key here. since_dt is derived from max(created_date),
+    # so the state_key always equals "the latest date we already have" — checking
+    # it would skip every run and freeze the watermark permanently (the bug that
+    # stuck this table at 2026-05-26). setup_audit_trail is ReplacingMergeTree
+    # ORDER BY (created_date, id), so re-querying from the overlapping watermark
+    # each cycle is safe: duplicate boundary rows collapse on merge.
 
     soql = (
         f"SELECT Id, Action, Section, CreatedDate, CreatedById, "

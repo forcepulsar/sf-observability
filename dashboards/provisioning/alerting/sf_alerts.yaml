@@ -199,6 +199,51 @@ groups:
               refId: C
               type: classic_conditions
 
+      - uid: sf-watermark-frozen
+        title: Ingest Watermark Frozen — Sync Running but Table Not Advancing
+        condition: C
+        for: 0s
+        annotations:
+          summary: "ingest_threat_store has run in the last 24h, but setup_audit_trail hasn't advanced in 14+ days"
+          description: "Signature of a frozen incremental watermark (the sync executes but the table's max date is stuck — the bug fixed in fix/watermark-deadlock-audit-threats). An active org should produce setup audit records well within 14 days. Check the SetupAuditTrail sync in ingest_threat_store.py and recent ingest logs. This rule only fires when the sync is actually running, so it won't double-report a down container (see sf-ingest-stale)."
+        labels:
+          severity: warning
+          team: ops
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: CLICKHOUSE_DS_UID
+            model:
+              rawSql: |
+                -- days_stale, but only when the threat-store sync actually ran in the
+                -- last 24h. If the sync is NOT running, returns 0 (no alert) — a down
+                -- container is covered by sf-ingest-stale instead.
+                SELECT
+                  if(
+                    (SELECT count()
+                       FROM salesforceProd.ingestion_runs
+                       WHERE script = 'ingest_threat_store'
+                         AND status IN ('success', 'partial')
+                         AND ended_at >= now() - INTERVAL 24 HOUR) > 0,
+                    dateDiff('day',
+                      (SELECT max(created_date) FROM salesforceProd.setup_audit_trail FINAL),
+                      now()),
+                    0
+                  ) AS days_stale_while_running
+              format: table
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              conditions:
+                - evaluator: { params: [14], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { params: [], type: last }
+              refId: C
+              type: classic_conditions
+
       - uid: sf-api-limit-warning
         title: Salesforce API Limit — Warning Threshold
         condition: C
