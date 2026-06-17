@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, hardening]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -11,9 +11,9 @@ jobs:
     name: Lint Python
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -27,7 +27,7 @@ jobs:
     name: Validate shell scripts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check schema scripts parse cleanly
         run: bash -n schema/setup.sh && bash -n schema/validate_schema.sh
