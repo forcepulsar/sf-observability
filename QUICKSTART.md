@@ -40,6 +40,29 @@ Run the setup script (it creates the database, substitutes the name, and applies
 
 You should see `✓ Schema setup complete for: salesforceProd`.
 
+### Separate dev and prod databases (optional)
+
+To experiment without touching production data, bootstrap a second, empty
+database and keep two env files side by side:
+
+```bash
+# One-time: create an empty dev database from the same schema
+./schema/setup.sh <your-ch-host> <your-ch-password> salesforceDev
+```
+
+```bash
+cp .env.prod.example .env.prod   # CH_DATABASE / CLICKHOUSE_DATABASE = salesforceProd
+cp .env.dev.example  .env.dev    # CH_DATABASE / CLICKHOUSE_DATABASE = salesforceDev
+```
+
+`.env.dev` and `.env.prod` are **identical except for the two `*_DATABASE`
+lines** (host and credentials are shared). Both files are gitignored. Select
+one per command with `--env-file`, e.g. populate dev via backfill:
+
+```bash
+docker compose --env-file .env.dev run --rm ingest /app/ingest.py --backfill 30
+```
+
 ---
 
 ## Step 3 — Create a Salesforce ingest user

@@ -80,6 +80,8 @@ CREATE TABLE IF NOT EXISTS salesforceProd.login_events
     log_file_id            String,
     ingested_at            DateTime DEFAULT now()
 )
-ENGINE = MergeTree()
+-- ReplacingMergeTree(ingested_at) deduplicates on re-ingest; matches production.
+-- ORDER BY (timestamp, request_id) is the ingest deduplication key.
+ENGINE = ReplacingMergeTree(ingested_at)
 PARTITION BY toYYYYMM(timestamp)
-ORDER BY (timestamp, user_id);
+ORDER BY (timestamp, request_id);
