@@ -15,11 +15,8 @@ Usage:
 
 import csv
 import fcntl
-import io
-import json
 import logging
 import os
-import subprocess
 import sys
 import tempfile
 import time
@@ -28,9 +25,9 @@ from pathlib import Path
 
 import clickhouse_connect
 from dotenv import load_dotenv
-from simple_salesforce import Salesforce
 
 import metrics
+from sf_auth import get_sf_client
 
 load_dotenv()
 
@@ -727,70 +724,6 @@ CONFIG: dict[str, dict] = {
         "interval": "Daily",
     },
 }
-
-
-# ---------------------------------------------------------------------------
-# Salesforce auth via CLI (no credentials stored on disk)
-# ---------------------------------------------------------------------------
-
-def get_sf_client(org_alias: str) -> Salesforce:
-    """Authenticate via JWT/ECA (required) or a pre-obtained access token (CI/CD only).
-
-    JWT/ECA is the only supported auth method for production. Username/password
-    and browser-login tokens are not supported — they expire silently and are
-    a security anti-pattern for unattended server processes.
-
-    Setup (one time):
-        1. Create an External Client App in Salesforce Setup with JWT OAuth enabled.
-        2. openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes
-        3. Upload server.crt to the ECA. Copy the Consumer Key to SF_JWT_CLIENT_ID.
-        4. Set SF_JWT_KEY_FILE (absolute path to server.key) and SF_JWT_USERNAME in .env.
-    """
-
-    # Primary: JWT/ECA — mandatory for production, never expires between runs.
-    if SF_JWT_CLIENT_ID and SF_JWT_KEY_FILE and SF_JWT_USERNAME:
-        instance_url = os.environ.get("SF_INSTANCE_URL", "https://login.salesforce.com").strip()
-        try:
-            subprocess.run(
-                ["sf", "org", "login", "jwt",
-                 "--client-id", SF_JWT_CLIENT_ID,
-                 "--jwt-key-file", SF_JWT_KEY_FILE,
-                 "--username", SF_JWT_USERNAME,
-                 "--instance-url", instance_url,
-                 "--alias", org_alias,
-                 "--json"],
-                capture_output=True, text=True, check=True,
-            )
-            result = subprocess.run(
-                ["sf", "org", "display", "--target-org", org_alias, "--json"],
-                capture_output=True, text=True, check=True,
-            )
-            data = json.loads(result.stdout).get("result", {})
-            access_token = data.get("accessToken")
-            resolved_url = data.get("instanceUrl", instance_url)
-            if access_token:
-                log.info(f"  Auth: JWT/ECA ({SF_JWT_USERNAME})")
-                return Salesforce(instance_url=resolved_url, session_id=access_token)
-            log.error("  JWT auth succeeded but no access token returned.")
-            sys.exit(1)
-        except subprocess.CalledProcessError as e:
-            log.error(f"  JWT auth failed: {e.stderr.strip()}")
-            sys.exit(1)
-
-    # Secondary: pre-obtained access token — acceptable for CI/CD pipelines that
-    # obtain the token externally via JWT and inject it as an environment variable.
-    access_token = os.environ.get("SF_ACCESS_TOKEN", "").strip()
-    instance_url = os.environ.get("SF_INSTANCE_URL", "").strip()
-    if access_token and instance_url:
-        log.info(f"  Auth: access token ({instance_url})")
-        return Salesforce(instance_url=instance_url, session_id=access_token)
-
-    log.error(
-        "Salesforce auth not configured. JWT/ECA is required.\n"
-        "  Set SF_JWT_CLIENT_ID, SF_JWT_KEY_FILE, and SF_JWT_USERNAME in .env.\n"
-        "  See .env.example for step-by-step setup instructions."
-    )
-    sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
