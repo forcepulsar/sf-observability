@@ -77,8 +77,11 @@ run_statement "CREATE DATABASE IF NOT EXISTS ${DATABASE}"
 echo "  ✓ Database ready"
 
 # 2. Apply schema files in order
+#    schema_threat.sql last: its user_id_map view + user_lookup dictionary
+#    depend on the `users` table created in schema_events.sql.
 apply_file "schema_core.sql"
 apply_file "schema_events.sql"
+apply_file "schema_threat.sql"
 
 # 3. Apply any pending migrations (incremental changes since the base schema).
 #    On a fresh install these no-op on already-current tables and are recorded
