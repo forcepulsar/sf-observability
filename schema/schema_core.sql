@@ -54,6 +54,22 @@ CREATE TABLE IF NOT EXISTS salesforceProd.ingestion_events
 ENGINE = MergeTree()
 ORDER BY (started_at, run_id);
 
+-- Script-level failures captured by entrypoint.sh when ingest.py or
+-- ingest_threat_store.py exit non-zero — including crashes that happen BEFORE
+-- the script connects to ClickHouse (e.g. Salesforce auth failures), which
+-- per-event/per-run metrics can never record. log_tail_b64 is the base64 of the
+-- last ~2KB of output; decode in queries with base64Decode(log_tail_b64).
+-- This is what makes a failed cycle diagnosable from Grafana without SSH.
+CREATE TABLE IF NOT EXISTS salesforceProd.ingestion_errors
+(
+    ts            DateTime DEFAULT now(),
+    script        LowCardinality(String),
+    exit_code     Int32,
+    log_tail_b64  String
+)
+ENGINE = MergeTree()
+ORDER BY ts;
+
 -- Main login events table
 CREATE TABLE IF NOT EXISTS salesforceProd.login_events
 (
