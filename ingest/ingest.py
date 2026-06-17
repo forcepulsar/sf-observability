@@ -181,6 +181,41 @@ CONFIG: dict[str, dict] = {
     },
 
     # ------------------------------------------------------------------
+    # Logout  → logout_events  (completes the Login/session lifecycle)
+    # CSV: EVENT_TYPE, TIMESTAMP(_DERIVED), REQUEST_ID, ORGANIZATION_ID, USER_ID,
+    #   USER_TYPE, SESSION_TYPE/LEVEL, BROWSER/PLATFORM/RESOLUTION/APP_TYPE,
+    #   CLIENT_VERSION, API_TYPE/VERSION, USER_INITIATED_LOGOUT, SESSION_KEY,
+    #   LOGIN_KEY, CLIENT_IP. user_name is enriched from user_id (not in the CSV).
+    # Published Daily for this org.
+    # ------------------------------------------------------------------
+    "Logout": {
+        "table": "logout_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":     "timestamp",
+            "EVENT_TYPE":            "event_type",
+            "REQUEST_ID":            "request_id",
+            "ORGANIZATION_ID":       "organization_id",
+            "USER_ID":               "user_id",
+            "USER_TYPE":             "user_type",
+            "SESSION_TYPE":          "session_type",
+            "SESSION_LEVEL":         "session_level",
+            "BROWSER_TYPE":          "browser_type",
+            "PLATFORM_TYPE":         "platform_type",
+            "RESOLUTION_TYPE":       "resolution_type",
+            "APP_TYPE":              "app_type",
+            "CLIENT_VERSION":        "client_version",
+            "API_TYPE":              "api_type",
+            "API_VERSION":           "api_version",
+            "USER_INITIATED_LOGOUT": "user_initiated_logout",
+            "SESSION_KEY":           "session_key",
+            "LOGIN_KEY":             "login_key",
+            "CLIENT_IP":             "client_ip",
+        },
+        "numeric_cols": [],
+        "interval": "Daily",
+    },
+
+    # ------------------------------------------------------------------
     # ReportExport  → report_export_events
     # CSV cols: EVENT_TYPE, TIMESTAMP_DERIVED, REQUEST_ID, ORGANIZATION_ID,
     #   USER_ID, USER_ID_DERIVED, URI_ID_DERIVED, CLIENT_IP, RUN_TIME, CPU_TIME
