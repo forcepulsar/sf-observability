@@ -26,7 +26,12 @@ converge on the same shape.
 - Make statements idempotent: `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`,
   `CREATE TABLE IF NOT EXISTS`, etc. A migration may be applied to several
   databases (prod, dev, a reference DB) and must be safe everywhere.
-- Statements are split on `;`. Keep one statement per logical change.
+- Statements are split on `;`. Keep one statement per logical change, and **do
+  not put `;` inside a string literal** (e.g. a column COMMENT) — the splitter is
+  naive and would break the statement mid-string. Use `.` or `,` instead.
+- `ALTER TABLE ... COMMENT COLUMN IF EXISTS` no-ops on a missing *column* but
+  errors on a missing *table*, so only comment columns on tables the base schema
+  actually creates.
 - **Also update the base schema files** (`schema_core.sql` / `schema_events.sql`)
   so a brand-new install gets the change directly. The migration is how
   *existing* databases catch up; the base files are the source of truth for
