@@ -758,6 +758,202 @@ CONFIG: dict[str, dict] = {
         "numeric_cols": ["total_execution_time_ms", "error_count"],
         "interval": "Daily",
     },
+
+    # Report -> report_events (security/access coverage, Daily)
+    "Report": {
+        "table": "report_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "RUN_TIME":                  "run_time",
+            "CPU_TIME":                  "cpu_time",
+            "URI":                       "uri",
+            "SESSION_KEY":               "session_key",
+            "LOGIN_KEY":                 "login_key",
+            "USER_TYPE":                 "user_type",
+            "REQUEST_STATUS":            "request_status",
+            "DB_TOTAL_TIME":             "db_total_time",
+            "ENTITY_NAME":               "entity_name",
+            "DISPLAY_TYPE":              "display_type",
+            "RENDERING_TYPE":            "rendering_type",
+            "REPORT_ID":                 "report_id",
+            "ROW_COUNT":                 "row_count",
+            "NUMBER_EXCEPTION_FILTERS":  "number_exception_filters",
+            "NUMBER_COLUMNS":            "number_columns",
+            "UI_NUMBER_COLUMNS":         "ui_number_columns",
+            "AVERAGE_ROW_SIZE":          "average_row_size",
+            "SORT":                      "sort",
+            "DB_BLOCKS":                 "db_blocks",
+            "DB_CPU_TIME":               "db_cpu_time",
+            "NUMBER_BUCKETS":            "number_buckets",
+            "CLIENT_IP":                 "client_ip",
+            "ORIGIN":                    "origin",
+        },
+        "numeric_cols": ['run_time', 'cpu_time', 'db_total_time', 'row_count', 'number_exception_filters', 'number_columns', 'ui_number_columns', 'average_row_size', 'db_blocks', 'db_cpu_time', 'number_buckets'],
+        "interval": "Daily",
+    },
+
+    # Dashboard -> dashboard_events (security/access coverage, Daily)
+    "Dashboard": {
+        "table": "dashboard_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "RUN_TIME":                  "run_time",
+            "CPU_TIME":                  "cpu_time",
+            "URI":                       "uri",
+            "SESSION_KEY":               "session_key",
+            "LOGIN_KEY":                 "login_key",
+            "DASHBOARD_COMPONENT_ID":    "dashboard_component_id",
+            "DASHBOARD_ID":              "dashboard_id",
+            "REPORT_ID":                 "report_id",
+            "IS_SUCCESS":                "is_success",
+            "DASHBOARD_TYPE":            "dashboard_type",
+            "IS_SCHEDULED":              "is_scheduled",
+            "VIEWING_USER_ID":           "viewing_user_id",
+            "CLIENT_IP":                 "client_ip",
+        },
+        "numeric_cols": ['run_time', 'cpu_time'],
+        "interval": "Daily",
+    },
+
+    # Search -> search_events (security/access coverage, Daily)
+    "Search": {
+        "table": "search_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "QUERY_ID":                  "query_id",
+            "NUM_RESULTS":               "num_results",
+            "SEARCH_QUERY":              "search_query",
+            "PREFIXES_SEARCHED":         "prefixes_searched",
+        },
+        "numeric_cols": ['num_results'],
+        "interval": "Daily",
+    },
+
+    # SearchClick -> search_click_events (security/access coverage, Daily)
+    "SearchClick": {
+        "table": "search_click_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "QUERY_ID":                  "query_id",
+            "CLICKED_RECORD_ID":         "clicked_record_id",
+            "RANK":                      "rank",
+        },
+        "numeric_cols": ['rank'],
+        "interval": "Daily",
+    },
+
+    # ContentTransfer -> content_transfer_events (security/access coverage, Daily)
+    "ContentTransfer": {
+        "table": "content_transfer_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "TRANSACTION_TYPE":          "transaction_type",
+            "DOCUMENT_ID":               "document_id",
+            "VERSION_ID":                "version_id",
+            "FILE_TYPE":                 "file_type",
+            "FILE_PREVIEW_TYPE":         "file_preview_type",
+            "SIZE_BYTES":                "size_bytes",
+        },
+        "numeric_cols": ['size_bytes'],
+        "interval": "Daily",
+    },
+
+    # DocumentAttachmentDownloads -> document_attachment_download_events (security/access coverage, Daily)
+    "DocumentAttachmentDownloads": {
+        "table": "document_attachment_download_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "ENTITY_ID":                 "entity_id",
+            "FILE_TYPE":                 "file_type",
+        },
+        "numeric_cols": [],
+        "interval": "Daily",
+    },
+
+    # Attachment -> attachment_events (security/access coverage, Daily)
+    "Attachment": {
+        "table": "attachment_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "PARENT_ID":                 "parent_id",
+            "ATTACHMENT_ID":             "attachment_id",
+            "CONTENT_TYPE":              "content_type",
+            "OPERATION":                 "operation",
+            "IS_PRIVATE_ON":             "is_private_on",
+        },
+        "numeric_cols": [],
+        "interval": "Daily",
+    },
+
+    # ContentDocumentLink -> content_document_link_events (security/access coverage, Daily)
+    "ContentDocumentLink": {
+        "table": "content_document_link_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "DOCUMENT_ID":               "document_id",
+            "SHARED_WITH_ENTITY_ID":     "shared_with_entity_id",
+            "SHARING_PERMISSION":        "sharing_permission",
+            "SHARING_OPERATION":         "sharing_operation",
+        },
+        "numeric_cols": [],
+        "interval": "Daily",
+    },
+
+    # GroupMembership -> group_membership_events (security/access coverage, Daily)
+    "GroupMembership": {
+        "table": "group_membership_events",
+        "column_map": {
+            "TIMESTAMP_DERIVED":         "timestamp",
+            "EVENT_TYPE":                "event_type",
+            "REQUEST_ID":                "request_id",
+            "ORGANIZATION_ID":           "organization_id",
+            "USER_ID":                   "user_id",
+            "RUN_TIME":                  "run_time",
+            "CPU_TIME":                  "cpu_time",
+            "URI":                       "uri",
+            "SESSION_KEY":               "session_key",
+            "LOGIN_KEY":                 "login_key",
+            "OPERATION":                 "operation",
+            "GROUP_TYPE":                "group_type",
+            "GROUP_ID":                  "group_id",
+            "MEMBER_ID":                 "member_id",
+            "CLIENT_IP":                 "client_ip",
+        },
+        "numeric_cols": ['run_time', 'cpu_time'],
+        "interval": "Daily",
+    },
 }
 
 
