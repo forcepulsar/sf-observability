@@ -1242,6 +1242,74 @@
       ],
       "title": "Recent failures and skips",
       "type": "table"
+    },
+    {
+      "id": 22,
+      "type": "table",
+      "title": "Script Failures (entrypoint) \u2014 last 7 days",
+      "description": "Non-zero exits of ingest.py / ingest_threat_store.py / optimize, captured by entrypoint.sh \u2014 INCLUDING crashes before ClickHouse connects (e.g. Salesforce auth). log_tail is the last ~2KB of output. Empty = no script-level failures. This is the no-SSH diagnosis surface.",
+      "gridPos": {
+        "x": 0,
+        "y": 76,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "cfgz0zrjwhudcc"
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "ts",
+            "desc": true
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "log_tail"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 900
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "exit_code"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "cfgz0zrjwhudcc"
+          },
+          "rawSql": "SELECT ts, script, exit_code, base64Decode(log_tail_b64) AS log_tail FROM salesforceProd.ingestion_errors WHERE ts >= now() - INTERVAL 7 DAY ORDER BY ts DESC LIMIT 50",
+          "format": "table"
+        }
+      ]
     }
   ]
 }
