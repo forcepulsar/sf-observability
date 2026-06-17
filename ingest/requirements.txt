@@ -1,3 +1,7 @@
 simple-salesforce>=1.12.5
 clickhouse-connect>=0.7.0
 python-dotenv>=1.0.0
+# Direct deps for the native JWT auth in sf_auth.py (also pulled transitively by
+# simple-salesforce, but pinned here since we import them directly).
+pyjwt[crypto]>=2.4.0
+requests>=2.22.0

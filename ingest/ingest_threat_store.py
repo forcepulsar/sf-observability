@@ -22,17 +22,15 @@ Usage:
     python ingest_threat_store.py --only=SetupAuditTrail
 """
 
-import json
 import os
-import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 
 import clickhouse_connect
 from dotenv import load_dotenv
-from simple_salesforce import Salesforce
 
 import metrics
+from sf_auth import get_sf_client
 
 load_dotenv()
 
@@ -224,50 +222,6 @@ SETUP_AUDIT_CONFIG = {
         ORDER BY (created_date, id)
     """,
 }
-
-
-# ---------------------------------------------------------------------------
-# Auth — tries access token, SF CLI, then username/password (mirrors ingest.py)
-# ---------------------------------------------------------------------------
-
-def get_sf_client(org_alias: str) -> Salesforce:
-    """Authenticate via access token, SF CLI, or username/password (in that priority order)."""
-
-    # 1. Explicit access token — set SF_ACCESS_TOKEN + SF_INSTANCE_URL in .env
-    #    Get the token from: sf org display --target-org CHProd --json
-    access_token = os.environ.get("SF_ACCESS_TOKEN", "").strip()
-    instance_url = os.environ.get("SF_INSTANCE_URL", "").strip()
-    if access_token and instance_url:
-        print(f"  Auth: access token ({instance_url})")
-        return Salesforce(instance_url=instance_url, session_id=access_token)
-
-    # 2. SF CLI token — works when running locally with `sf org login web`
-    try:
-        result = subprocess.run(
-            ["sf", "org", "display", "--target-org", org_alias, "--json"],
-            capture_output=True, text=True, check=True,
-        )
-        data = json.loads(result.stdout).get("result", {})
-        access_token = data.get("accessToken")
-        instance_url = data.get("instanceUrl")
-        if access_token and instance_url:
-            print(f"  Auth: Salesforce CLI token ({org_alias})")
-            return Salesforce(instance_url=instance_url, session_id=access_token)
-    except Exception:
-        pass
-
-    # 3. Username/password — uses SF_USERNAME / SF_PASSWORD / SF_SECURITY_TOKEN from .env
-    username = os.environ.get("SF_USERNAME")
-    password = os.environ.get("SF_PASSWORD")
-    token    = os.environ.get("SF_SECURITY_TOKEN", "").strip()
-    domain   = os.environ.get("SF_DOMAIN", "login")
-    if username and password:
-        print(f"  Auth: username/password ({username})")
-        return Salesforce(username=username, password=password, security_token=token, domain=domain)
-
-    print(f"ERROR: No valid Salesforce auth. Set SF_ACCESS_TOKEN+SF_INSTANCE_URL in .env, "
-          f"run `sf org login web --alias {org_alias}`, or set SF_USERNAME/SF_PASSWORD.")
-    sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
