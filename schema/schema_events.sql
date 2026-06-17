@@ -290,6 +290,19 @@ CREATE TABLE IF NOT EXISTS salesforceProd.apex_exception_events
     exception_type      String,
     exception_message   String,
     stack_trace         String,
+    -- Derived category for dashboards/AI grouping; computed from exception_message.
+    -- MATERIALIZED = recomputed on insert, no ingest change needed. Mirrors the
+    -- hand-added column already present in production.
+    exception_category  String MATERIALIZED multiIf(
+        exception_message LIKE '%CPU time limit%', 'CPU Timeout',
+        exception_message LIKE '%Too many DML statements%', 'DML Limit',
+        exception_message LIKE '%Too many query rows%', 'Too Many Rows',
+        exception_message LIKE '%UNABLE_TO_LOCK_ROW%' OR exception_message LIKE '%unable to obtain exclusive%', 'Row Lock',
+        exception_message LIKE '%Too many SOQL queries%', 'SOQL Limit',
+        exception_message LIKE '%CalloutException%' OR exception_message LIKE '%timed out%' OR exception_message LIKE '%Read timed out%', 'Callout Timeout',
+        exception_message LIKE '%heap size%', 'Heap Limit',
+        exception_message LIKE '%LimitException%', 'Other Limit',
+        'Other'),
     class_name          String,
     method_name         String,
     log_file_id         String,
