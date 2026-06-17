@@ -80,7 +80,16 @@ echo "  ✓ Database ready"
 apply_file "schema_core.sql"
 apply_file "schema_events.sql"
 
-# 3. Summary
+# 3. Apply any pending migrations (incremental changes since the base schema).
+#    On a fresh install these no-op on already-current tables and are recorded
+#    as applied, so they never re-run.
+if [[ -d "${SCRIPT_DIR}/migrations" ]] && compgen -G "${SCRIPT_DIR}/migrations/*.sql" > /dev/null; then
+  echo ""
+  echo "Applying migrations..."
+  "${SCRIPT_DIR}/migrate.sh" "$HOST" "$PASSWORD" "$DATABASE" || ERRORS=$((ERRORS + 1))
+fi
+
+# 4. Summary
 echo ""
 if [[ $ERRORS -eq 0 ]]; then
   echo "✓ Schema setup complete for: $DATABASE"
