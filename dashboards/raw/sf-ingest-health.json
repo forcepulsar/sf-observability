@@ -25,7 +25,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "## How this works\nThe pipeline runs **every 6 hours**. It has two steps: **\u2460 Event Logs** (pulls login, API, Apex, etc. from Salesforce \u2014 takes ~30 min) then **\u2461 Threats & Audit** (pulls Shield detections and config changes \u2014 takes ~1 min). Between runs it sleeps. If the laptop sleeps/reboots, the sleep gets stuck and the pipeline won't run again until restarted."
+        "content": "## How this works\nThe pipeline runs **every 2 hours**. It has two steps: **\u2460 Event Logs** (pulls login, API, Apex, etc. from Salesforce \u2014 takes ~30 min) then **\u2461 Threats & Audit** (pulls Shield detections and config changes \u2014 takes ~1 min). Between runs it sleeps. If the laptop sleeps/reboots, the sleep gets stuck and the pipeline won't run again until restarted."
       }
     },
     {
@@ -76,7 +76,7 @@
               "type": "range",
               "options": {
                 "from": 0,
-                "to": 360,
+                "to": 180,
                 "result": {
                   "text": "SLEEPING OK",
                   "color": "green",
@@ -87,8 +87,8 @@
             {
               "type": "range",
               "options": {
-                "from": 360,
-                "to": 720,
+                "from": 180,
+                "to": 300,
                 "result": {
                   "text": "OVERDUE",
                   "color": "yellow",
@@ -99,7 +99,7 @@
             {
               "type": "range",
               "options": {
-                "from": 720,
+                "from": 300,
                 "to": 9999999,
                 "result": {
                   "text": "STUCK \u2014 RESTART",
@@ -174,7 +174,7 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "cfgz0zrjwhudcc"
           },
-          "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 21600)) * 1000 AS next_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
+          "rawSql": "SELECT toUnixTimestamp(addSeconds(max(ended_at), 7200)) * 1000 AS next_run FROM ingestion_runs WHERE script = 'ingest' AND status IN ('success','partial')",
           "format": "table"
         }
       ]
