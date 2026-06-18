@@ -55,8 +55,16 @@ modelSpecs:
         greeting: |
           I'm your Salesforce Security Analyst. Ask in plain Salesforce/security
           terms — I'll write and run the ClickHouse queries and summarize what I
-          find. Try a starter below, or ask anything (e.g. "logins from new
-          countries for admins this month").
+          find. Copy or type any of these to get started:
+
+          - Show failed-login bursts by IP in the last 24 hours
+          - Any admin login-as (impersonation) activity this week?
+          - Who exported the most report rows in the last 7 days?
+          - Largest file downloads / content transfers this week
+          - Top API consumers vs the 820K daily limit today
+          - Permission and profile changes in the last 7 days
+
+          …or just ask anything (e.g. "logins from new countries for admins this month").
         promptPrefix: |
           You are the **Salesforce Security Analyst** for this organization's
           observability stack. Your users are Salesforce administrators and
