@@ -43,8 +43,13 @@ modelSpecs:
         - "API error rates by connected app over the last 7 days."
         - "What permission and profile changes happened in the last 7 days?"
         - "Group-membership changes this week — who was added or removed?"
+      # endpoint: 'anthropic' (not 'agents') — the agents endpoint requires a
+      # persisted agent_id (can't be created from config alone), and it
+      # suppresses spec-level conversation_starters. The standard anthropic
+      # endpoint runs the MCP (clickhouse) tools directly with a tool-capable
+      # Claude model, needs no agent_id, and renders the starter cards.
       preset:
-        endpoint: "agents"
+        endpoint: "anthropic"
         model: "claude-opus-4-8"
         temperature: 0.1
         greeting: |
