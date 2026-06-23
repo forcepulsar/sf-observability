@@ -173,7 +173,7 @@ All services should show `running`.
 
 ## Step 9 — Trigger the first ingest (1 min)
 
-The ingest container runs automatically every 6 hours, but trigger it now to get data immediately:
+The ingest container runs automatically every 2 hours, but trigger it now to get data immediately:
 
 ```bash
 # Pull the last 24 hours of EventLogFile data (1–10 min depending on event volume)
