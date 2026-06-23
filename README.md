@@ -152,9 +152,9 @@ See `.env.example` for all variables. Key ones:
 
 ## Event types ingested
 
-The pipeline captures 22 Salesforce EventLogFile event types plus 5 threat detection types from the Shield Event Store. See `SCHEMA_AUDIT.md` for a full field-by-field breakdown.
+The pipeline captures 33 distinct Salesforce EventLogFile event types (34 ingest configurations — `ApiTotalUsage` is ingested both daily and hourly) plus 5 threat detection types from the Shield Event Store. See `SCHEMA_AUDIT.md` for a full field-by-field breakdown.
 
-**EventLogFile types:** `Login`, `LoginAs`, `RestApi`, `API` (SOAP), `BulkApi`, `BulkApi2`, `ApexTrigger`, `ApexExecution`, `ApexCallout`, `ApexException`, `FlowExecution`, `URI`, `LightningPageView`, `LightningInteraction`, `MetadataApiOperation`, `NamedCredential`, `ReportExport`, `InsufficientAccess`, `PermissionUpdate`, `PackageInstall`, `FlowNavMetric`, `ApiTotalUsage`
+**EventLogFile types:** `Login`, `LoginAs`, `SalesforceLoginAs`, `Logout`, `RestApi`, `API` (SOAP), `BulkApi`, `BulkApi2`, `ApexTrigger`, `ApexExecution`, `ApexCallout`, `ApexUnexpectedException`, `FlowExecution`, `FlowNavMetric`, `URI`, `LightningPageView`, `LightningInteraction`, `MetadataApiOperation`, `NamedCredential`, `ReportExport`, `Report`, `Dashboard`, `Search`, `SearchClick`, `InsufficientAccess`, `PermissionUpdate`, `PackageInstall`, `GroupMembership`, `ContentTransfer`, `ContentDocumentLink`, `Attachment`, `DocumentAttachmentDownloads`, `ApiTotalUsage`
 
 **Threat Detection types:** `CredentialStuffing`, `SessionHijacking`, `ApiAnomaly`, `ReportAnomaly`, `GuestUserAnomaly`
 
