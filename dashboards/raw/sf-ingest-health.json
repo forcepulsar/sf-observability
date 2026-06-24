@@ -889,16 +889,16 @@
             },
             "properties": [
               {
-                "id": "unit",
-                "value": "ms"
-              },
-              {
                 "id": "displayName",
                 "value": "Duration"
               },
               {
                 "id": "custom.width",
                 "value": 120
+              },
+              {
+                "id": "unit",
+                "value": "ms"
               }
             ]
           },
@@ -909,16 +909,20 @@
             },
             "properties": [
               {
-                "id": "unit",
-                "value": "short"
-              },
-              {
                 "id": "displayName",
                 "value": "Rows Loaded"
               },
               {
                 "id": "custom.width",
                 "value": 130
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
               }
             ]
           },
@@ -1085,7 +1089,13 @@
         }
       ],
       "title": "Run duration (seconds) by script",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      }
     },
     {
       "datasource": {
@@ -1124,7 +1134,13 @@
         }
       ],
       "title": "Rows ingested per run by script",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      }
     },
     {
       "datasource": {
@@ -1163,7 +1179,13 @@
         }
       ],
       "title": "Events per hour by status",
-      "type": "timeseries"
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      }
     },
     {
       "datasource": {
@@ -1202,7 +1224,59 @@
         }
       ],
       "title": "Duration by event type (successful runs)",
-      "type": "table"
+      "type": "table",
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rows"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_sec"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_sec"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "datasource": {
