@@ -83,7 +83,8 @@ services:
 
   # ── Grafana ──────────────────────────────────────────────────────────────────
   grafana:
-    image: grafana/grafana:latest
+    # Pinned (was `:latest`) so Grafana upgrades only when this tag is bumped.
+    image: grafana/grafana:13.0.2
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     env_file: .env

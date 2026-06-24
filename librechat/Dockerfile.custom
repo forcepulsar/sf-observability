@@ -1,4 +1,6 @@
-FROM registry.librechat.ai/danny-avila/librechat-dev:latest
+# Pinned to the STABLE v0.8.6 release (was `librechat-dev:latest`, a moving dev
+# channel that drifted on every rebuild). Bump this tag deliberately to upgrade.
+FROM registry.librechat.ai/danny-avila/librechat:v0.8.6
 USER root
 RUN apk add --no-cache python3 python3-dev py3-pip gcc musl-dev gettext && \
     pip3 install mcp-clickhouse --break-system-packages
