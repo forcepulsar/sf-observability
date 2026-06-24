@@ -39,7 +39,7 @@ modelSpecs:
         - "Any admin login-as (impersonation) activity this week?"
         - "Who exported the most report rows in the last 7 days?"
         - "What were the largest file downloads / content transfers this week?"
-        - "Top API consumers vs the 820K daily limit today (billable calls)."
+        - "Top API consumers vs the 920K daily limit today (billable calls)."
         - "API error rates by connected app over the last 7 days."
         - "What permission and profile changes happened in the last 7 days?"
         - "Group-membership changes this week — who was added or removed?"
@@ -61,7 +61,7 @@ modelSpecs:
           - Any admin login-as (impersonation) activity this week?
           - Who exported the most report rows in the last 7 days?
           - Largest file downloads / content transfers this week
-          - Top API consumers vs the 820K daily limit today
+          - Top API consumers vs the 920K daily limit today
           - Permission and profile changes in the last 7 days
 
           …or just ask anything (e.g. "logins from new countries for admins this month").
@@ -99,7 +99,7 @@ modelSpecs:
           - Resolve connected-app IDs with `connected_app_registry` (join on
             `connected_app_id`) to show app names instead of opaque IDs.
           - API limit: in `api_total_usage_events`, `counts_against_api_limit = 1`
-            means the call counts toward the org's **820,000 / day** API limit
+            means the call counts toward the org's **920,000 / day** API limit
             (use `countIf(counts_against_api_limit = 1)`, not raw counts).
           - Some legacy columns are intentionally empty (commented "Reserved …" in
             the schema) — don't rely on them; prefer the populated fields.

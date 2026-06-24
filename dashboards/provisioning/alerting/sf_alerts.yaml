@@ -265,7 +265,7 @@ groups:
                 SELECT
                   round(
                     countIf(counts_against_api_limit = 1) * 100.0
-                    / 920000,   -- update with your org's actual limit
+                    / 920000,   -- 920000 = DailyApiRequests.Max (verified 2026-06); TODO: source dynamically from api_limit table
                     1
                   ) AS pct_used
                 FROM salesforceProd.api_total_usage_events FINAL

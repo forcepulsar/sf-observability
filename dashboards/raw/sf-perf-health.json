@@ -2353,8 +2353,8 @@
     {
       "type": "stat",
       "id": 81,
-      "title": "API Calls vs 800K Daily Limit (Rolling 24h)",
-      "description": "Total API calls counting toward Salesforce's 800K rolling 24h limit",
+      "title": "API Calls vs 920K Daily Limit (Rolling 24h)",
+      "description": "Total API calls counting toward Salesforce's 920K rolling 24h limit",
       "gridPos": {
         "h": 4,
         "w": 8,
