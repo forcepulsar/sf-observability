@@ -1,6 +1,17 @@
 version: 1.1.5
 
 # ---------------------------------------------------------------------------
+# Self-registration is scoped to @clickhouse.com emails. Enabling signup also
+# requires ALLOW_REGISTRATION=true in .env. Because every LibreChat user shares
+# the server-side read-only ClickHouse connection (via the MCP below), "who can
+# register" is the entire access boundary — keep it domain-restricted.
+# NOTE: allowedDomains is case-sensitive — keep the domain lowercase.
+# ---------------------------------------------------------------------------
+registration:
+  allowedDomains:
+    - "clickhouse.com"
+
+# ---------------------------------------------------------------------------
 # ClickHouse MCP server — gives the AI read access to the Salesforce data.
 # ---------------------------------------------------------------------------
 mcpServers:
