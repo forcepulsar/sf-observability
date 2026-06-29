@@ -212,7 +212,7 @@ CONFIG: dict[str, dict] = {
             "CLIENT_IP":             "client_ip",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -235,7 +235,7 @@ CONFIG: dict[str, dict] = {
             "CPU_TIME":          "cpu_time_ns",
         },
         "numeric_cols": ["run_time_ns", "cpu_time_ns"],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -284,7 +284,7 @@ CONFIG: dict[str, dict] = {
             "DESCRIPTION":       "description",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -462,7 +462,7 @@ CONFIG: dict[str, dict] = {
             "RUN_TIME":          "run_time_ns",
         },
         "numeric_cols": ["run_time_ns"],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -582,7 +582,7 @@ CONFIG: dict[str, dict] = {
             "INSTALL_TYPE":         "install_type",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
     # ------------------------------------------------------------------
@@ -756,10 +756,10 @@ CONFIG: dict[str, dict] = {
             "ERROR_COUNT":              "error_count",
         },
         "numeric_cols": ["total_execution_time_ms", "error_count"],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # Report -> report_events (security/access coverage, Daily)
+    # Report -> report_events (security/access coverage, Hourly)
     "Report": {
         "table": "report_events",
         "column_map": {
@@ -793,10 +793,10 @@ CONFIG: dict[str, dict] = {
             "ORIGIN":                    "origin",
         },
         "numeric_cols": ['run_time', 'cpu_time', 'db_total_time', 'row_count', 'number_exception_filters', 'number_columns', 'ui_number_columns', 'average_row_size', 'db_blocks', 'db_cpu_time', 'number_buckets'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # Dashboard -> dashboard_events (security/access coverage, Daily)
+    # Dashboard -> dashboard_events (security/access coverage, Hourly)
     "Dashboard": {
         "table": "dashboard_events",
         "column_map": {
@@ -820,10 +820,10 @@ CONFIG: dict[str, dict] = {
             "CLIENT_IP":                 "client_ip",
         },
         "numeric_cols": ['run_time', 'cpu_time'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # Search -> search_events (security/access coverage, Daily)
+    # Search -> search_events (security/access coverage, Hourly)
     "Search": {
         "table": "search_events",
         "column_map": {
@@ -838,10 +838,10 @@ CONFIG: dict[str, dict] = {
             "PREFIXES_SEARCHED":         "prefixes_searched",
         },
         "numeric_cols": ['num_results'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # SearchClick -> search_click_events (security/access coverage, Daily)
+    # SearchClick -> search_click_events (security/access coverage, Hourly)
     "SearchClick": {
         "table": "search_click_events",
         "column_map": {
@@ -855,10 +855,10 @@ CONFIG: dict[str, dict] = {
             "RANK":                      "rank",
         },
         "numeric_cols": ['rank'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # ContentTransfer -> content_transfer_events (security/access coverage, Daily)
+    # ContentTransfer -> content_transfer_events (security/access coverage, Hourly)
     "ContentTransfer": {
         "table": "content_transfer_events",
         "column_map": {
@@ -875,10 +875,10 @@ CONFIG: dict[str, dict] = {
             "SIZE_BYTES":                "size_bytes",
         },
         "numeric_cols": ['size_bytes'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # DocumentAttachmentDownloads -> document_attachment_download_events (security/access coverage, Daily)
+    # DocumentAttachmentDownloads -> document_attachment_download_events (security/access coverage, Hourly)
     "DocumentAttachmentDownloads": {
         "table": "document_attachment_download_events",
         "column_map": {
@@ -891,10 +891,10 @@ CONFIG: dict[str, dict] = {
             "FILE_TYPE":                 "file_type",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # Attachment -> attachment_events (security/access coverage, Daily)
+    # Attachment -> attachment_events (security/access coverage, Hourly)
     "Attachment": {
         "table": "attachment_events",
         "column_map": {
@@ -910,10 +910,10 @@ CONFIG: dict[str, dict] = {
             "IS_PRIVATE_ON":             "is_private_on",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # ContentDocumentLink -> content_document_link_events (security/access coverage, Daily)
+    # ContentDocumentLink -> content_document_link_events (security/access coverage, Hourly)
     "ContentDocumentLink": {
         "table": "content_document_link_events",
         "column_map": {
@@ -928,10 +928,10 @@ CONFIG: dict[str, dict] = {
             "SHARING_OPERATION":         "sharing_operation",
         },
         "numeric_cols": [],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 
-    # GroupMembership -> group_membership_events (security/access coverage, Daily)
+    # GroupMembership -> group_membership_events (security/access coverage, Hourly)
     "GroupMembership": {
         "table": "group_membership_events",
         "column_map": {
@@ -952,7 +952,7 @@ CONFIG: dict[str, dict] = {
             "CLIENT_IP":                 "client_ip",
         },
         "numeric_cols": ['run_time', 'cpu_time'],
-        "interval": "Daily",
+        "interval": "Hourly",
     },
 }
 
