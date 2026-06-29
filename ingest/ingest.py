@@ -1231,46 +1231,48 @@ def main():
         if only_types and event_type not in only_types:
             return 0, 0, 0
         interval = cfg["interval"] if (backfill and cfg.get("backfill_as_hourly")) else ("Daily" if backfill else cfg["interval"])
-        if smoke:
-            limit = 1
-        elif backfill:
-            # Hourly event types need a larger limit per backfill run — 2 sequences/hour × 24h × days
-            limit = cfg.get("backfill_limit_override", 90)
-        else:
-            # Allow per-event-type limit override (e.g. hourly ApiTotalUsage has 2 sequences/hour)
-            limit = cfg.get("limit_override", 24)
         thread_client = _make_ch_client()
-
-        # P4: explicit date-range filter in normal mode so the intent is unambiguous
-        # and gaps can't occur silently if > limit files exist (e.g. after an outage).
-        # Smoke test: no date filter — always fetch the single most recent file regardless of age.
-        if smoke:
-            mode_label  = "smoke (most recent file)"
-            date_filter = ""
-        elif backfill:
-            mode_label  = "backfill (daily, last 90)"
-            date_filter = ""
-        else:
-            now = datetime.now(timezone.utc)
-            if interval == "Hourly":
-                cutoff = (now - timedelta(hours=limit)).strftime("%Y-%m-%dT%H:%M:%SZ")
-            else:
-                cutoff = (now - timedelta(days=limit)).strftime("%Y-%m-%dT00:00:00Z")
-            mode_label  = f"{interval.lower()}, last {limit}"
-            date_filter = f"AND LogDate >= {cutoff} "
-
-        log.info(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
 
         # sf_event_type allows the config key to differ from the Salesforce EventType
         # (e.g. "ApiTotalUsageHourly" config key → EventType = "ApiTotalUsage")
         sf_event_type = cfg.get("sf_event_type", event_type)
-        result = sf.query(
-            f"SELECT Id, EventType, LogDate, LogFile, Interval "
-            f"FROM EventLogFile "
+        base_soql = (
+            f"SELECT Id, EventType, LogDate, LogFile, Interval FROM EventLogFile "
             f"WHERE EventType = '{sf_event_type}' AND Interval = '{interval}' "
-            f"{date_filter}"
-            f"ORDER BY LogDate DESC LIMIT {limit}"
         )
+
+        # Normal mode fetches EVERY file in a time window (paginated via
+        # query_all, NO file-count cap). High-volume types emit multiple Sequence
+        # files per hour; the old fixed LIMIT silently dropped the oldest ones,
+        # which were then permanently lost once out of the window (e.g. ApexTrigger
+        # was missing ~76% of rows). already_ingested() makes the extra files
+        # cheap — only genuinely new files are downloaded. The lookback window is
+        # now decoupled from any cap (tunable via lookback_hours / lookback_days).
+        # Smoke and backfill keep an explicit LIMIT.
+        if smoke:
+            mode_label = "smoke (most recent file)"
+            soql = base_soql + "ORDER BY LogDate DESC LIMIT 1"
+            paginate = False
+        elif backfill:
+            bf_limit = cfg.get("backfill_limit_override", 90)
+            mode_label = f"backfill ({interval.lower()}, last {bf_limit})"
+            soql = base_soql + f"ORDER BY LogDate DESC LIMIT {bf_limit}"
+            paginate = False
+        else:
+            now = datetime.now(timezone.utc)
+            if interval == "Hourly":
+                hours = cfg.get("lookback_hours", 24)
+                cutoff = (now - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                mode_label = f"hourly, last {hours}h (all files)"
+            else:
+                days = cfg.get("lookback_days", 24)
+                cutoff = (now - timedelta(days=days)).strftime("%Y-%m-%dT00:00:00Z")
+                mode_label = f"daily, last {days}d (all files)"
+            soql = base_soql + f"AND LogDate >= {cutoff} ORDER BY LogDate DESC"
+            paginate = True
+
+        log.info(f"\n[{event_type}] Querying EventLogFiles ({mode_label})…")
+        result = sf.query_all(soql) if paginate else sf.query(soql)
         files = result["records"]
         log.info(f"[{event_type}] Found {len(files)} file(s)")
 
