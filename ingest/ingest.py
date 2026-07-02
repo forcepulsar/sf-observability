@@ -1051,8 +1051,12 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
     table = cfg["table"]
     url = f"https://{sf.sf_instance}{file_meta['LogFile']}"
 
-    # P2: retry with exponential backoff for transient Salesforce errors (429, 5xx).
-    # A missed file within the 24h retention window is permanent data loss.
+    # Download with retry. Retries cover BOTH transient HTTP errors (429/5xx) AND
+    # truncated/incomplete downloads. Critical: a partial file must NEVER be parsed
+    # or recorded as ingested — historically a short read silently lost ~75% of rows
+    # on high-volume files, and the partial file was then marked "done" so it was
+    # never re-fetched (unrecoverable). A missed file within retention is data loss.
+    tmp_name = None
     for attempt in range(3):
         response = sf.session.get(
             url,
@@ -1066,25 +1070,54 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
             time.sleep(wait)
             continue
         response.raise_for_status()
-        break
 
-    # Dynamic chunk size: target ~100 iterations per file, bounded 1MB–2MB.
-    # Reduces Python loop overhead for large files vs a fixed 64KB chunk.
-    content_length = int(response.headers.get("content-length", 0))
-    chunk_size = (
-        min(max(1024 * 1024, content_length // 100), 2 * 1024 * 1024)
-        if content_length else 1024 * 1024
-    )
+        # Dynamic chunk size: target ~100 iterations per file, bounded 1MB–2MB.
+        content_length = int(response.headers.get("content-length", 0))
+        chunk_size = (
+            min(max(1024 * 1024, content_length // 100), 2 * 1024 * 1024)
+            if content_length else 1024 * 1024
+        )
 
-    tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False)
+        tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False)
+        tmp_name = tmp.name
+        bytes_written = 0
+        try:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    tmp.write(chunk)
+                    bytes_written += len(chunk)
+            tmp.flush()
+            tmp.close()
+        except Exception as e:
+            tmp.close()
+            os.unlink(tmp_name)
+            tmp_name = None
+            if attempt < 2:
+                log.warning(f"  download error for {log_file_id} ({e}), retrying…")
+                time.sleep(10 * (2 ** attempt))
+                continue
+            raise
+
+        # Completeness guard: a short read means the stream truncated mid-download.
+        # Discard and retry — never parse/insert/mark-done a partial file.
+        if content_length and bytes_written != content_length:
+            os.unlink(tmp_name)
+            tmp_name = None
+            if attempt < 2:
+                log.warning(
+                    f"  incomplete download for {log_file_id}: "
+                    f"{bytes_written}/{content_length} bytes — retrying…"
+                )
+                time.sleep(10 * (2 ** attempt))
+                continue
+            raise RuntimeError(
+                f"incomplete download after retries for {log_file_id}: "
+                f"{bytes_written}/{content_length} bytes"
+            )
+        break  # download complete and (when content-length known) verified
+
     try:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            if chunk:
-                tmp.write(chunk)
-        tmp.flush()
-        tmp.close()
-
-        with open(tmp.name, encoding="utf-8") as fh:
+        with open(tmp_name, encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
             rows = []
             total = 0
@@ -1107,7 +1140,8 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
                 skipped += _insert_batch(client, table, rows)
                 total += len(rows)
     finally:
-        os.unlink(tmp.name)
+        if tmp_name:
+            os.unlink(tmp_name)
 
     if not smoke:
         # Don't record smoke runs — they should always re-test on next invocation
