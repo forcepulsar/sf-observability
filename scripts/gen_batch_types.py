@@ -42,7 +42,7 @@ def ch_type(f):
     if f == "TIMESTAMP_DERIVED":
         return "DateTime64(3)"
     if f in NUMERIC:
-        return "UInt64"
+        return "Int64"
     if f in LOWCARD:
         return "LowCardinality(String)"
     return "String"
