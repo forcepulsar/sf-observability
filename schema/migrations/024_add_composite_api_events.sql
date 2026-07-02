@@ -1,0 +1,28 @@
+-- Add composite_api_events (EventType: CompositeApi) — security/API/perf EventLogFile coverage.
+-- Hourly. timestamp DateTime64(3) (ms) so high-frequency events don't collapse.
+-- Rollback: DROP TABLE salesforceProd.composite_api_events;
+CREATE TABLE IF NOT EXISTS salesforceProd.composite_api_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    all_or_none            String,
+    failure_reason         String,
+    is_request_collation_on String,
+    num_retries            UInt64,
+    num_graph_depth        UInt64,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
