@@ -845,3 +845,378 @@ CREATE TABLE IF NOT EXISTS salesforceProd.group_membership_events
 ENGINE = ReplacingMergeTree(ingested_at)
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- csp_violation_events  (EventType: CSPViolation)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.csp_violation_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    blocked_uri            String,
+    blocked_uri_domain     String,
+    directive              LowCardinality(String),
+    context                String,
+    unique_id              String,
+    disposition            LowCardinality(String),
+    source                 String,
+    column_number          UInt64,
+    line_number            UInt64,
+    source_file            String,
+    resource_sample        String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- content_distribution_events  (EventType: ContentDistribution)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.content_distribution_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    delivery_id            String,
+    user_id                String,
+    user_name              String,
+    version_id             String,
+    related_entity_id      String,
+    delivery_location      LowCardinality(String),
+    action                 LowCardinality(String),
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- sandbox_events  (EventType: Sandbox)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.sandbox_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    sandbox_id             String,
+    organization_id        LowCardinality(String),
+    pending_sandbox_org_id String,
+    current_sandbox_org_id String,
+    status                 LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- platform_encryption_events  (EventType: PlatformEncryption)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.platform_encryption_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    key_id                 String,
+    action                 LowCardinality(String),
+    key_type               LowCardinality(String),
+    method                 LowCardinality(String),
+    bot_id                 String,
+    bot_session_id         String,
+    planner_id             String,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- visualforce_request_events  (EventType: VisualforceRequest)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.visualforce_request_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    user_type              LowCardinality(String),
+    request_status         LowCardinality(String),
+    db_total_time          UInt64,
+    page_name              String,
+    request_type           LowCardinality(String),
+    is_first_request       String,
+    query                  String,
+    http_method            LowCardinality(String),
+    user_agent             String,
+    request_size           UInt64,
+    response_size          UInt64,
+    view_state_size        UInt64,
+    controller_type        LowCardinality(String),
+    managed_package_namespace String,
+    is_ajax_request        String,
+    db_blocks              UInt64,
+    db_cpu_time            UInt64,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- apex_rest_api_events  (EventType: ApexRestApi)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.apex_rest_api_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    user_type              LowCardinality(String),
+    request_status         LowCardinality(String),
+    db_total_time          UInt64,
+    method                 LowCardinality(String),
+    media_type             LowCardinality(String),
+    status_code            UInt64,
+    user_agent             String,
+    rows_processed         UInt64,
+    number_fields          UInt64,
+    db_blocks              UInt64,
+    db_cpu_time            UInt64,
+    request_size           UInt64,
+    response_size          UInt64,
+    entity_name            String,
+    connected_app_id       String,
+    client_name            String,
+    exception_message      String,
+    query                  String,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- sites_events  (EventType: Sites)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.sites_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    user_type              LowCardinality(String),
+    request_status         LowCardinality(String),
+    db_total_time          UInt64,
+    page_name              String,
+    request_type           LowCardinality(String),
+    is_first_request       String,
+    query                  String,
+    site_id                String,
+    is_secure              String,
+    response_size          UInt64,
+    is_guest               String,
+    is_api                 String,
+    is_error               String,
+    http_method            LowCardinality(String),
+    http_headers           String,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- bulk_api_request_events  (EventType: BulkApiRequest)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.bulk_api_request_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    request_path           String,
+    api_version            String,
+    job_id                 String,
+    batch_id               String,
+    operation_type         LowCardinality(String),
+    success                String,
+    error_message          String,
+    connected_app_id       String,
+    client_name            String,
+    concurrency_mode       LowCardinality(String),
+    status_code            UInt64,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- database_save_events  (EventType: DatabaseSave)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.database_save_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    key_prefix             LowCardinality(String),
+    dml_type               LowCardinality(String),
+    num_rows               UInt64,
+    sample_factor          UInt64,
+    first_entity_id        String,
+    session_key            String,
+    login_key              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- composite_api_subrequest_events  (EventType: CompositeApiSubrequest)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.composite_api_subrequest_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    user_type              LowCardinality(String),
+    request_status         LowCardinality(String),
+    db_total_time          UInt64,
+    method                 LowCardinality(String),
+    is_cancelled           String,
+    cancelled_reason       String,
+    success                String,
+    status_code            UInt64,
+    initial_reference_ids  String,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- queued_execution_events  (EventType: QueuedExecution)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.queued_execution_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    user_type              LowCardinality(String),
+    request_status         LowCardinality(String),
+    db_total_time          UInt64,
+    job_id                 String,
+    entry_point            LowCardinality(String),
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
+
+-- ---------------------------------------------------------------------------
+-- composite_api_events  (EventType: CompositeApi)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS salesforceProd.composite_api_events
+(
+    timestamp              DateTime64(3),
+    event_type             LowCardinality(String),
+    request_id             String,
+    organization_id        LowCardinality(String),
+    user_id                String,
+    user_name              String,
+    run_time               UInt64,
+    cpu_time               UInt64,
+    uri                    String,
+    session_key            String,
+    login_key              String,
+    all_or_none            String,
+    failure_reason         String,
+    is_request_collation_on String,
+    num_retries            UInt64,
+    num_graph_depth        UInt64,
+    client_ip              String,
+    log_file_id            String,
+    ingested_at            DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(timestamp)
+ORDER BY (timestamp, request_id);
