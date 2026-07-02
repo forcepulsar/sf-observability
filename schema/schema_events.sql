@@ -499,7 +499,7 @@ ORDER BY (timestamp, request_id);
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS salesforceProd.api_total_usage_events
 (
-    timestamp                   DateTime,
+    timestamp                   DateTime64(3),
     event_type                  String,
     request_id                  String,
     organization_id             String,
