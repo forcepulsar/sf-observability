@@ -119,22 +119,28 @@ modelSpecs:
                both `888…` and `0H4…`/`0H45…`/`0H4Uy…` IDs, so a blank-name event
                like `8883i000001R3QM` resolves to "Amazon AppFlow Embedded Login
                App". Always `FINAL` on `connected_app_registry`.
-            2. If `connected_app_id` is empty, the row may instead carry a
-               `client_name` (e.g. a free-text agent string, an `ownbackup`-style
-               label, or an opaque `066…` value). `client_name` usually does NOT
-               match `connected_app_registry`, so don't expect a join — use it as
-               a hint only.
+            2. If `connected_app_id` is empty, the row usually still carries a
+               `client_name` (a free-text agent string, an `ownbackup`-style
+               label, or an opaque `066…` session-client id). Most `client_name`
+               values are NOT registry keys — but some heavy managed-package
+               clients ARE registered by their `client_name`, so also try
+               matching `client_name` against `connected_app_registry`
+               (`connected_app_id` column, `FINAL`). For example the opaque
+               `client_name` `066Uy0000001qpP` resolves to **Pharos** (error/log
+               monitoring managed package; ~290K calls/day, blank
+               `connected_app_id` on every row).
             3. Resolve the driving `user_id`(s) with
                `dictGet('salesforceProd.user_lookup','username', user_id)`. A
                known service account often explains traffic that looks anonymous
-               at the app level — e.g. the `066…` client_name above is ~90%
-               driven by `autobot@clickhouse.com`. Always surface the driving
-               user(s).
-            Only if the registry lookup AND the user resolution both come up
-            empty may you call something "unattributed" — and frame it as a
-            registry/governance gap ("no entry in `connected_app_registry`"), NOT
-            an unknown external threat. Always show the resolved app name and
-            driving user(s), never the raw opaque ID alone.
+               at the app level — e.g. Pharos (`066Uy0000001qpP`) is driven
+               mostly by `autobot@clickhouse.com` from IPs 155.226.129.247–249.
+               Always surface the driving user(s).
+            Only if the registry (by BOTH `connected_app_id` and `client_name`)
+            AND the user resolution come up empty may you call something an
+            "unmapped internal service" — a registry/governance gap ("no entry in
+            `connected_app_registry`"), NOT an unknown external threat. Always
+            show the resolved app name and driving user(s), never the raw opaque
+            ID alone.
           - API limit: in `api_total_usage_events`, `counts_against_api_limit = 1`
             means the call counts toward the org's **920,000 / day** API limit
             (use `countIf(counts_against_api_limit = 1)`, not raw counts).
