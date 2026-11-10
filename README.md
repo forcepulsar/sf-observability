@@ -49,7 +49,7 @@ flowchart TD
 
 See **[QUICKSTART.md](QUICKSTART.md)** for the full step-by-step setup guide (~25 minutes).
 
-The setup order matters: create the ingest user, create the External Client App with client credentials enabled (Run As = ingest user), fill in `.env`, then start the stack. The detailed guide walks through each step with all required commands and Salesforce UI clicks.
+The setup order matters: create the ingest user, create the External Client App with client credentials enabled (Run As = ingest user), fill in `.env.salesforce` and `.env`, then start the stack. The detailed guide walks through each step with all required commands and Salesforce UI clicks.
 
 ## Dashboards
 
@@ -113,7 +113,7 @@ ORDER BY billable_calls DESC
 
 The ingest pipeline uses the **OAuth 2.0 client credentials flow** on an External Client App. It posts the consumer key + secret to the org's token endpoint and gets back an access token. Salesforce runs the session as the ECA's configured **Run As** user. No certificates to create, rotate, or ship.
 
-Three environment variables are required:
+Three environment variables are required, in `.env.salesforce` (loaded only by the ingest container):
 
 | Variable | Description |
 |---|---|
@@ -136,7 +136,7 @@ Access tokens expire (typically 2–24 hours) and are not suitable for long-runn
 
 ## Configuration reference
 
-See `.env.example` for all variables. Key ones:
+See `.env.example` and `.env.salesforce.example` for all variables. `SF_*` go in `.env.salesforce` (ingest-only); everything else in `.env`. Key ones:
 
 | Variable | Description |
 |---|---|

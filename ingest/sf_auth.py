@@ -21,12 +21,18 @@ import os
 import sys
 
 import requests
+from dotenv import find_dotenv, load_dotenv
 from simple_salesforce import Salesforce
 
 log = logging.getLogger("ingest")
 
-SF_CLIENT_ID = os.getenv("SF_CLIENT_ID", "").strip()
-SF_CLIENT_SECRET = os.getenv("SF_CLIENT_SECRET", "").strip()
+# Salesforce credentials live in .env.salesforce, not the shared .env. In Docker
+# the ingest service injects it via env_file; for local runs, load it here (at
+# import, so callers that read SF_* at module level see it). Never overrides
+# variables already set in the environment.
+_sf_env = find_dotenv(".env.salesforce")
+if _sf_env:
+    load_dotenv(_sf_env)
 
 
 def get_sf_client(org_alias: str = "") -> Salesforce:
@@ -38,10 +44,12 @@ def get_sf_client(org_alias: str = "") -> Salesforce:
     CLI org alias); auth is driven entirely by environment variables.
     """
     instance_url = os.environ.get("SF_INSTANCE_URL", "").strip().rstrip("/")
+    client_id = os.environ.get("SF_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("SF_CLIENT_SECRET", "").strip()
 
     # 1. Client credentials flow. Requires the org's My Domain URL —
     #    login.salesforce.com / test.salesforce.com reject this grant.
-    if SF_CLIENT_ID and SF_CLIENT_SECRET:
+    if client_id and client_secret:
         if not instance_url:
             log.error("  SF_INSTANCE_URL is required (org My Domain URL).")
             sys.exit(1)
@@ -50,8 +58,8 @@ def get_sf_client(org_alias: str = "") -> Salesforce:
                 f"{instance_url}/services/oauth2/token",
                 data={
                     "grant_type": "client_credentials",
-                    "client_id": SF_CLIENT_ID,
-                    "client_secret": SF_CLIENT_SECRET,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
                 },
                 timeout=30,
             )
@@ -83,7 +91,7 @@ def get_sf_client(org_alias: str = "") -> Salesforce:
 
     log.error(
         "Salesforce auth not configured. Client credentials are required.\n"
-        "  Set SF_CLIENT_ID, SF_CLIENT_SECRET, and SF_INSTANCE_URL in .env.\n"
-        "  See .env.example for setup instructions."
+        "  Set SF_CLIENT_ID, SF_CLIENT_SECRET, and SF_INSTANCE_URL in .env.salesforce.\n"
+        "  See .env.salesforce.example for setup instructions."
     )
     sys.exit(1)
