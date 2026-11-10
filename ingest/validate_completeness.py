@@ -24,7 +24,6 @@ import sys
 
 import clickhouse_connect
 import requests
-
 import sf_auth
 
 API_VER = "v59.0"
@@ -34,11 +33,12 @@ INGEST_PY = os.getenv("INGEST_PY_PATH", "/app/ingest.py")
 
 def load_eventtype_table_map(path: str = INGEST_PY) -> dict[str, str]:
     """Parse ingest.py's CONFIG into {EventType: clickhouse_table}."""
-    src = open(path).read()
+    with open(path) as fh:
+        src = fh.read()
     start = src.index("CONFIG: dict[str, dict] = {")
     close = src.index("\n}\n", start)
     block = src[start:close]
-    keys = [(m.group(1), m.start()) for m in re.finditer(r'^    "([A-Za-z0-9]+)":', block, re.M)]
+    keys = [(m.group(1), m.start()) for m in re.finditer(r'^    "([A-Za-z0-9]+)":', block, re.MULTILINE)]
     out: dict[str, str] = {}
     for i, (key, pos) in enumerate(keys):
         end = keys[i + 1][1] if i + 1 < len(keys) else len(block)
@@ -61,7 +61,7 @@ def count_daily_file_rows(instance_url: str, session_id: str, file_id: str) -> i
 
 def main() -> int:
     day = sys.argv[1] if len(sys.argv) > 1 else (
-        dt.datetime.utcnow().date() - dt.timedelta(days=2)
+        dt.datetime.now(dt.UTC).date() - dt.timedelta(days=2)
     ).isoformat()
 
     cfg = load_eventtype_table_map()
@@ -116,7 +116,6 @@ def main() -> int:
             gaps += 1
             continue
         diff = c - d
-        pct = (diff / d) if d else 0.0
         if d > 0 and c < d * (1 - TOLERANCE):
             status = "GAP ❌"
             gaps += 1

@@ -18,7 +18,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install ruff==0.17.4   # pinned: bump deliberately (see ruff.toml)
 
       - name: Lint
         run: ruff check ingest/

@@ -24,12 +24,11 @@ Usage:
 
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import clickhouse_connect
-from dotenv import load_dotenv
-
 import metrics
+from dotenv import load_dotenv
 from sf_auth import get_sf_client
 
 load_dotenv()
@@ -230,7 +229,7 @@ SETUP_AUDIT_CONFIG = {
 
 def _parse_sf_datetime(raw) -> datetime:
     if not raw:
-        return datetime(1970, 1, 2, tzinfo=timezone.utc)
+        return datetime(1970, 1, 2, tzinfo=UTC)
     # Normalise SF's +0000 offset to +00:00 so strptime %z works on all
     # Python versions, and handle the common Z-suffix variants.
     s = str(raw).replace("+0000", "+00:00").replace("-0000", "+00:00")
@@ -241,10 +240,10 @@ def _parse_sf_datetime(raw) -> datetime:
         "%Y-%m-%dT%H:%M:%SZ",       # 2026-01-15T10:30:00Z
     ):
         try:
-            return datetime.strptime(s, fmt).astimezone(timezone.utc).replace(tzinfo=None)
+            return datetime.strptime(s, fmt).astimezone(UTC).replace(tzinfo=None)
         except ValueError:
             continue
-    return datetime(1970, 1, 2, tzinfo=timezone.utc)
+    return datetime(1970, 1, 2, tzinfo=UTC)
 
 
 def _insert_batch(client, table: str, rows: list[dict]):
@@ -286,18 +285,18 @@ def sync_threat_store(sf, client, run_id, only_objects=None, backfill=False):
 
         # Determine how far back to query
         if backfill:
-            since_dt = datetime.now(timezone.utc) - timedelta(days=90)
+            since_dt = datetime.now(UTC) - timedelta(days=90)
         else:
             try:
                 result = client.query(f"SELECT max(event_date) FROM {CH_DATABASE}.{table}")
                 latest = result.result_rows[0][0]
                 if latest and latest.year > 1970:
                     # Overlap by 1 hour to catch late-arriving events
-                    since_dt = latest.replace(tzinfo=timezone.utc) - timedelta(hours=1)
+                    since_dt = latest.replace(tzinfo=UTC) - timedelta(hours=1)
                 else:
-                    since_dt = datetime.now(timezone.utc) - timedelta(days=30)
+                    since_dt = datetime.now(UTC) - timedelta(days=30)
             except Exception:
-                since_dt = datetime.now(timezone.utc) - timedelta(days=30)
+                since_dt = datetime.now(UTC) - timedelta(days=30)
 
         since_str = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
         # Stable deduplication key: EventType + date (not a timestamp that changes each run)
@@ -403,17 +402,17 @@ def sync_setup_audit_trail(sf, client, run_id, backfill=False):
     client.command(cfg["create_sql"].format(db=CH_DATABASE))
 
     if backfill:
-        since_dt = datetime.now(timezone.utc) - timedelta(days=180)
+        since_dt = datetime.now(UTC) - timedelta(days=180)
     else:
         try:
             result = client.query(f"SELECT max(created_date) FROM {CH_DATABASE}.{table}")
             latest = result.result_rows[0][0]
             if latest and latest.year > 1970:
-                since_dt = latest.replace(tzinfo=timezone.utc) - timedelta(hours=1)
+                since_dt = latest.replace(tzinfo=UTC) - timedelta(hours=1)
             else:
-                since_dt = datetime.now(timezone.utc) - timedelta(days=30)
+                since_dt = datetime.now(UTC) - timedelta(days=30)
         except Exception:
-            since_dt = datetime.now(timezone.utc) - timedelta(days=30)
+            since_dt = datetime.now(UTC) - timedelta(days=30)
 
     since_str = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     # Stable deduplication key: EventType + date (not a timestamp that changes each run)
@@ -509,7 +508,7 @@ def main():
     only_objects = set(only_flag.split("=", 1)[1].split(",")) if only_flag else None
 
     run_id = metrics.new_run_id()
-    run_started = datetime.now(timezone.utc)
+    run_started = datetime.now(UTC)
     print(f"Run {run_id} started at {run_started.isoformat()}Z")
 
     print(f"Connecting to Salesforce (org: {org_alias})…")
@@ -544,7 +543,7 @@ def main():
 
     metrics.record_run(
         client, CH_DATABASE, run_id, "ingest_threat_store",
-        run_started, datetime.now(timezone.utc),
+        run_started, datetime.now(UTC),
         files_total, rows_total, errors,
     )
 

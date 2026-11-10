@@ -20,13 +20,12 @@ import os
 import sys
 import tempfile
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import clickhouse_connect
-from dotenv import load_dotenv
-
 import metrics
+from dotenv import load_dotenv
 from sf_auth import get_sf_client
 
 load_dotenv()
@@ -1326,7 +1325,7 @@ def already_ingested(client, log_file_ids: list[str]) -> set[str]:
 
 
 def record_ingestion(client, log_file_id: str, event_type: str, log_date: str, interval: str, row_count: int):
-    parsed_date = datetime.fromisoformat(log_date.replace("Z", "+00:00")).date()
+    parsed_date = datetime.fromisoformat(log_date).date()
     client.insert(
         f"{CH_DATABASE}.ingestion_state",
         [[log_file_id, event_type, parsed_date, interval, row_count]],
@@ -1394,7 +1393,7 @@ def ingest_file(sf, client, file_meta: dict, cfg: dict, user_map: dict | None = 
             if content_length else 1024 * 1024
         )
 
-        tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False)
+        tmp = tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False)  # noqa: SIM115 — closed + unlinked in the try/finally below
         tmp_name = tmp.name
         bytes_written = 0
         try:
@@ -1519,7 +1518,7 @@ def main():
     # to a single event type and already_ingested() prevents double-writing).
     if not smoke and not (backfill and only_types):
         lock_path = Path(os.getenv("LOCK_FILE", "/tmp/sf_ingest.lock"))
-        lock_fh = open(lock_path, "w")
+        lock_fh = open(lock_path, "w")  # noqa: SIM115 — held open for the whole run (flock)
         try:
             fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
@@ -1529,7 +1528,7 @@ def main():
     validate_config()
 
     run_id = metrics.new_run_id()
-    run_started = datetime.now(timezone.utc)
+    run_started = datetime.now(UTC)
     log.info(f"Run {run_id} started at {run_started.isoformat()}Z")
 
     log.info(f"Connecting to Salesforce (org: {org_alias})…")
@@ -1609,7 +1608,7 @@ def main():
             soql = base_soql + f"ORDER BY LogDate DESC LIMIT {bf_limit}"
             paginate = False
         else:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if interval == "Hourly":
                 hours = cfg.get("lookback_hours", 24)
                 cutoff = (now - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1642,7 +1641,7 @@ def main():
         for f in new_files:
             log.info(f"[{event_type}] Ingesting {f['Id']} ({f['LogDate']}) → {cfg['table']}…")
             try:
-                log_date = datetime.fromisoformat(f["LogDate"].replace("Z", "+00:00")).date()
+                log_date = datetime.fromisoformat(f["LogDate"]).date()
             except (ValueError, TypeError, KeyError):
                 log_date = None
             try:
@@ -1690,7 +1689,7 @@ def main():
 
     metrics.record_run(
         client, CH_DATABASE, run_id, "ingest",
-        run_started, datetime.now(timezone.utc),
+        run_started, datetime.now(UTC),
         grand_total_files, grand_total_rows, grand_total_errors,
     )
 

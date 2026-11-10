@@ -1,0 +1,10 @@
+# Ruff config. Pin the ruff version in .github/workflows/ci.yml alongside any
+# change here — an unpinned ruff silently enables new default rules.
+target-version = "py311"   # CI runs 3.11; the ingest image runs 3.12
+
+[lint]
+extend-ignore = [
+    # Deliberate: the ingest loop catches broad exceptions so one bad log file,
+    # table or event store can't abort the whole cycle. Every handler logs it.
+    "BLE001",
+]

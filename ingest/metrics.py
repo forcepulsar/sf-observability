@@ -7,7 +7,7 @@ Two tables (defined in schema/schema_core.sql):
 
 import uuid
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def new_run_id() -> str:
@@ -15,7 +15,8 @@ def new_run_id() -> str:
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    # Naive UTC, same as the old utcnow() (deprecated in 3.12).
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def _insert_safe(client, table: str, row: list, columns: list[str]):
