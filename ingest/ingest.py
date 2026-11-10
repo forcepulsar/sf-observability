@@ -37,10 +37,10 @@ load_dotenv()
 
 SF_ORG_ALIAS     = os.getenv("SF_ORG_ALIAS", "MyOrg")
 
-# JWT/ECA auth (recommended for production — never expires between runs)
-SF_JWT_CLIENT_ID = os.getenv("SF_JWT_CLIENT_ID", "").strip()
-SF_JWT_KEY_FILE  = os.getenv("SF_JWT_KEY_FILE", "").strip()
-SF_JWT_USERNAME  = os.getenv("SF_JWT_USERNAME", "").strip()
+# Client credentials auth (ECA consumer key + secret; runs as the ECA's Run As user)
+SF_CLIENT_ID     = os.getenv("SF_CLIENT_ID", "").strip()
+SF_CLIENT_SECRET = os.getenv("SF_CLIENT_SECRET", "").strip()
+SF_INSTANCE_URL  = os.getenv("SF_INSTANCE_URL", "").strip()
 
 CH_HOST     = os.environ["CH_HOST"].removeprefix("https://").removeprefix("http://")
 CH_PORT     = int(os.getenv("CH_PORT", "8443"))
@@ -74,16 +74,16 @@ log = _setup_logging()
 
 def validate_config() -> None:
     errors = []
-    has_jwt   = SF_JWT_CLIENT_ID and SF_JWT_KEY_FILE and SF_JWT_USERNAME
-    has_token = os.environ.get("SF_ACCESS_TOKEN") and os.environ.get("SF_INSTANCE_URL")
-    if not (has_jwt or has_token):
+    has_cc    = SF_CLIENT_ID and SF_CLIENT_SECRET
+    has_token = os.environ.get("SF_ACCESS_TOKEN")
+    if not (has_cc or has_token):
         errors.append(
-            "Salesforce auth not configured. JWT/ECA is required: set "
-            "SF_JWT_CLIENT_ID, SF_JWT_KEY_FILE, SF_JWT_USERNAME. "
+            "Salesforce auth not configured. Client credentials are required: set "
+            "SF_CLIENT_ID, SF_CLIENT_SECRET, SF_INSTANCE_URL. "
             "See .env.example for setup instructions."
         )
-    if SF_JWT_KEY_FILE and not Path(SF_JWT_KEY_FILE).exists():
-        errors.append(f"SF_JWT_KEY_FILE not found: {SF_JWT_KEY_FILE}")
+    if not SF_INSTANCE_URL:
+        errors.append("SF_INSTANCE_URL is not set (use the org My Domain URL).")
     if not os.environ.get("CH_PASSWORD"):
         errors.append("CH_PASSWORD is not set.")
     if not CH_HOST:

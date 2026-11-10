@@ -11,7 +11,6 @@ services:
       - LOCK_FILE=/var/lock/sf_ingest.lock
     volumes:
       - ingest_locks:/var/lock
-      - ./cert:/app/cert:ro    # JWT private key — place server.key here, set SF_JWT_KEY_FILE=/app/cert/server.key
     networks: [sf-obs]
 
   # ── LibreChat + ClickHouse MCP ───────────────────────────────────────────────

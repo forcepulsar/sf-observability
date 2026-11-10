@@ -2,7 +2,7 @@
 
 This guide walks you through a complete setup of the sf-observability stack: Salesforce EventLogFile ingestion into ClickHouse Cloud, with Grafana dashboards for visual analysis and LibreChat for AI-native investigation via natural language.
 
-Estimated setup time: 25 minutes. Prerequisites: Docker Desktop, a ClickHouse Cloud cluster, a Salesforce org with Event Monitoring enabled, and Java + OpenSSL installed locally.
+Estimated setup time: 25 minutes. Prerequisites: Docker Desktop, a ClickHouse Cloud cluster, a Salesforce org with Event Monitoring enabled.
 
 For full documentation, see [README.md](README.md).
 
@@ -78,57 +78,43 @@ Don't reuse an existing admin account — a dedicated user keeps API attribution
 
 ---
 
-## Step 4 — Create the certificate in Salesforce
+## Step 4 — Create the External Client App (client credentials)
 
-1. **Setup → Certificate and Key Management → Create Self-Signed Certificate**
-2. Fill in:
-   - **Label:** e.g. `sf_observability_prod_2026` — use underscores (this becomes the JKS alias)
-   - **Key Size:** `2048`
-   - Check **Exportable Private Key**
-3. Save → click the cert label → **Download Certificate** → save the `.crt` file
-
----
-
-## Step 5 — Create the External Client App and upload the certificate
+No certificate needed — the ingest authenticates with the ECA's consumer key + secret.
 
 1. **Setup → Apps → External Client Apps → New External Client App**
 2. Fill in App Name and Contact Email
 3. Under **OAuth Settings**:
-   - Enable OAuth, add scopes: **Manage user data via APIs (api)** and **Perform requests at any time (refresh_token, offline_access)**
-   - Check **Use digital signatures**, upload the `.crt` downloaded in Step 4
-4. Save and copy the **Consumer Key**
-5. Click **OAuth Policies**, set **Permitted Users** to **Admin approved users are pre-authorized**
-6. Click **App Policies** and add integration user permission set or profile
+   - Enable OAuth, add scope **Manage user data via APIs (api)**
+   - Callback URL is required but unused — `https://localhost` is fine
+   - Check **Enable Client Credentials Flow**
+4. Save. Under **Policies → OAuth Policies**:
+   - **Permitted Users:** Admin approved users are pre-authorized
+   - **Client Credentials Flow → Run As:** the ingest user from Step 3
+5. Under **App Policies**, add the ingest user's permission set or profile
+6. **Settings → OAuth Settings → Consumer Key and Secret** — copy both
 
----
-
-## Step 6 — Export the keystore and extract the private key
-
-Now that the ECA is configured and you have the Consumer Key, export the keystore:
-
-1. **Setup → Certificate and Key Management → Export to Keystore** → set a password → download the `.jks` file
-
-Then run the helper script (requires Java and OpenSSL):
+Test it before going further:
 
 ```bash
-./scripts/extract-sf-cert-key.sh <org-id>.jks sf_observability_prod_2026 sf-observability
+curl -s -X POST "https://yourorg.my.salesforce.com/services/oauth2/token" \
+  --data-urlencode grant_type=client_credentials \
+  --data-urlencode "client_id=<consumer key>" \
+  --data-urlencode "client_secret=<consumer secret>" | grep -o '"instance_url":"[^"]*"'
 ```
 
-When prompted about the JWT login test, answer **y** — you now have everything needed (Consumer Key from Step 5, username, instance URL).
-
-> **Sandbox users:** As of Salesforce Winter '26, `test.salesforce.com` no longer works. Always use the org-specific My Domain URL (e.g. `https://yourorg--sandbox.sandbox.my.salesforce.com`) as `SF_INSTANCE_URL`.
+> **My Domain required:** client credentials only works against the org's My Domain URL. `login.salesforce.com` and `test.salesforce.com` reject it. Sandboxes use e.g. `https://yourorg--sandbox.sandbox.my.salesforce.com`.
 
 ---
 
-## Step 7 — Fill in .env (3 min)
+## Step 5 — Fill in .env (3 min)
 
 Open `.env` in a text editor and fill in these sections:
 
 ```bash
 # Salesforce
-SF_JWT_CLIENT_ID=<Consumer Key from step 5>  # from ECA → Manage Consumer Details
-SF_JWT_KEY_FILE=/app/cert/server.key     # don't change — this is the in-container path
-SF_JWT_USERNAME=sf-obs-ingest@yourorg.com
+SF_CLIENT_ID=<Consumer Key from step 4>
+SF_CLIENT_SECRET=<Consumer Secret from step 4>
 SF_INSTANCE_URL=https://yourorg.my.salesforce.com
 SF_ORG_ALIAS=MyOrg
 
@@ -155,7 +141,7 @@ GRAFANA_ADMIN_PASSWORD=change-me
 
 ---
 
-## Step 8 — Start the stack (2 min)
+## Step 6 — Start the stack (2 min)
 
 ```bash
 docker compose up -d
@@ -171,7 +157,7 @@ All services should show `running`.
 
 ---
 
-## Step 9 — Trigger the first ingest (1 min)
+## Step 7 — Trigger the first ingest (1 min)
 
 The ingest container runs automatically every 2 hours, but trigger it now to get data immediately:
 
@@ -191,7 +177,7 @@ docker compose logs ingest -f
 
 ---
 
-## Step 10 — Open Grafana (1 min)
+## Step 8 — Open Grafana (1 min)
 
 Go to [http://localhost:3000](http://localhost:3000). Log in with `admin` / your `GRAFANA_ADMIN_PASSWORD`.
 
@@ -220,7 +206,6 @@ The 9 dashboards are pre-provisioned under the **Salesforce** folder:
 
 | Symptom | Fix |
 |---|---|
-| `docker compose logs ingest` shows auth error | Check `SF_JWT_CLIENT_ID`, `SF_JWT_KEY_FILE`, and that the ingest user is pre-authorized on the ECA |
-| Grafana shows "No data" | Run the ingest manually (Step 9) and verify ClickHouse Block 2 variables in `.env` |
+| `docker compose logs ingest` shows auth error | Check `SF_CLIENT_ID` / `SF_CLIENT_SECRET`, that `SF_INSTANCE_URL` is the My Domain URL, and that the ECA has client credentials enabled with a Run As user |
+| Grafana shows "No data" | Run the ingest manually (Step 7) and verify ClickHouse Block 2 variables in `.env` |
 | Schema setup fails | Ensure `CH_HOST` has `https://` and the password has no special shell characters |
-| `cert/server.key: No such file or directory` | Complete Step 6 — export the JKS from Salesforce and run the extraction script before `docker compose up` |
