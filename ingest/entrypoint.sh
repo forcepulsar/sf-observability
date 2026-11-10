@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-INTERVAL=${INGEST_INTERVAL_SECONDS:-7200}   # default 2 hours
+INTERVAL=${INGEST_INTERVAL_SECONDS:-3600}   # default 1 hour
 CH_DB="${CH_DATABASE:-salesforceProd}"
 
 echo "=== Salesforce Ingest Service starting ==="
