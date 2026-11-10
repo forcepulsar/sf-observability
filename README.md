@@ -145,7 +145,7 @@ See `.env.example` and `.env.salesforce.example` for all variables. `SF_*` go in
 | `SF_INSTANCE_URL` | Salesforce org URL — use org My Domain, not `test.salesforce.com` |
 | `CH_HOST` / `CH_PASSWORD` / `CH_DATABASE` | ClickHouse Cloud connection |
 | `GRAFANA_ADMIN_PASSWORD` | Grafana admin password (username is always `admin`) |
-| `INGEST_INTERVAL_SECONDS` | Ingest schedule in seconds (default: `7200` — 2 hours) |
+| `INGEST_INTERVAL_SECONDS` | Ingest schedule in seconds (default: `3600` — 1 hour) |
 | `ANTHROPIC_API_KEY` | For LibreChat AI features (optional) |
 
 ## Event types ingested
@@ -158,7 +158,7 @@ The pipeline captures 33 distinct Salesforce EventLogFile event types (34 ingest
 
 ## Limitations
 
-- **Data latency is near-real-time, not streaming.** Salesforce publishes EventLogFile data hourly (typically 1–3 hours after events occur). The ingest container runs every 2 hours by default. Set `INGEST_INTERVAL_SECONDS` to adjust.
+- **Data latency is near-real-time, not streaming.** Salesforce publishes EventLogFile data hourly (typically 1–3 hours after events occur). The ingest container runs every hour by default. Set `INGEST_INTERVAL_SECONDS` to adjust.
 - Requires the Salesforce Event Monitoring add-on (not included in standard org editions)
 - The Salesforce daily API limit varies by org — check Setup → Company Information for your specific limit
 
