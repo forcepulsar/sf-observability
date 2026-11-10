@@ -43,14 +43,13 @@ flowchart TD
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) — install this first if you don't have it
 - [ClickHouse Cloud](https://clickhouse.cloud/) account (free tier works)
 - Salesforce org with [Event Monitoring](https://help.salesforce.com/s/articleView?id=sf.real_time_em_buying.htm) enabled
-- Java and OpenSSL — required for private key extraction
 - An Anthropic API key (for LibreChat AI features — optional)
 
 ## Quick start
 
 See **[QUICKSTART.md](QUICKSTART.md)** for the full step-by-step setup guide (~25 minutes).
 
-The setup order matters: create the Salesforce certificate first, configure the External Client App and upload the certificate to it, extract the private key, fill in `.env`, then start the stack. The detailed guide walks through each step with all required commands and Salesforce UI clicks.
+The setup order matters: create the ingest user, create the External Client App with client credentials enabled (Run As = ingest user), fill in `.env`, then start the stack. The detailed guide walks through each step with all required commands and Salesforce UI clicks.
 
 ## Dashboards
 
@@ -112,21 +111,21 @@ ORDER BY billable_calls DESC
 
 ## Authentication
 
-The ingest pipeline uses **JWT/ECA (certificate-based) authentication** — the Salesforce-recommended approach for unattended server processes. The pipeline signs a JWT with a private key; Salesforce validates it against the uploaded certificate and returns an access token. No human interaction is needed after initial setup.
+The ingest pipeline uses the **OAuth 2.0 client credentials flow** on an External Client App. It posts the consumer key + secret to the org's token endpoint and gets back an access token. Salesforce runs the session as the ECA's configured **Run As** user. No certificates to create, rotate, or ship.
 
 Three environment variables are required:
 
 | Variable | Description |
 |---|---|
-| `SF_JWT_CLIENT_ID` | Consumer Key from the External Client App |
-| `SF_JWT_KEY_FILE` | Path to the private key file inside the container (`/app/cert/server.key`) |
-| `SF_JWT_USERNAME` | Salesforce username the ingest runs as |
+| `SF_CLIENT_ID` | Consumer Key from the External Client App |
+| `SF_CLIENT_SECRET` | Consumer Secret from the External Client App |
+| `SF_INSTANCE_URL` | Org My Domain URL — client credentials rejects `login.salesforce.com` |
 
-See [QUICKSTART.md](QUICKSTART.md) for the full certificate creation and ECA setup walkthrough.
+See [QUICKSTART.md](QUICKSTART.md) for the ECA setup walkthrough.
 
 ### Access token (CI/CD only)
 
-For pipelines that pre-obtain a token externally (e.g. a GitHub Actions workflow that runs `sf org login jwt` and injects the result):
+For pipelines that pre-obtain a token externally (e.g. a CI step that mints one and injects it):
 
 ```bash
 SF_ACCESS_TOKEN=<token>
@@ -141,9 +140,8 @@ See `.env.example` for all variables. Key ones:
 
 | Variable | Description |
 |---|---|
-| `SF_JWT_CLIENT_ID` | Consumer Key from your Salesforce External Client App |
-| `SF_JWT_KEY_FILE` | In-container path to the private key (`/app/cert/server.key`) |
-| `SF_JWT_USERNAME` | Salesforce username the ingest runs as |
+| `SF_CLIENT_ID` | Consumer Key from your Salesforce External Client App |
+| `SF_CLIENT_SECRET` | Consumer Secret from your Salesforce External Client App |
 | `SF_INSTANCE_URL` | Salesforce org URL — use org My Domain, not `test.salesforce.com` |
 | `CH_HOST` / `CH_PASSWORD` / `CH_DATABASE` | ClickHouse Cloud connection |
 | `GRAFANA_ADMIN_PASSWORD` | Grafana admin password (username is always `admin`) |

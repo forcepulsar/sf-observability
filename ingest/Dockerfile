@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 WORKDIR /app
 
-# Salesforce auth is now a native Python JWT grant (ingest/sf_auth.py) — no
+# Salesforce auth is a native Python client credentials grant (ingest/sf_auth.py) — no
 # Node.js or @salesforce/cli needed. This removes ~300MB and the entire class of
 # CLI-output-format breakage (e.g. the 2.138.x token-masking bug).
 
