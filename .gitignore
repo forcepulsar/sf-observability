@@ -1,6 +1,7 @@
 .env
 .env.dev
 .env.prod
+.env.salesforce
 __pycache__/
 *.pyc
 .DS_Store

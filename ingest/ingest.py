@@ -80,7 +80,7 @@ def validate_config() -> None:
         errors.append(
             "Salesforce auth not configured. Client credentials are required: set "
             "SF_CLIENT_ID, SF_CLIENT_SECRET, SF_INSTANCE_URL. "
-            "See .env.example for setup instructions."
+            "in .env.salesforce. See .env.salesforce.example."
         )
     if not SF_INSTANCE_URL:
         errors.append("SF_INSTANCE_URL is not set (use the org My Domain URL).")

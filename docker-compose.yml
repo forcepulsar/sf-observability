@@ -5,7 +5,9 @@ services:
     build:
       context: .
       dockerfile: ingest/Dockerfile
-    env_file: .env
+    env_file:
+      - .env
+      - .env.salesforce   # SF credentials — ingest only; never add this to other services
     restart: unless-stopped
     environment:
       - LOCK_FILE=/var/lock/sf_ingest.lock

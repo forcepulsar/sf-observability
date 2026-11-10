@@ -24,6 +24,7 @@ For full documentation, see [README.md](README.md).
 git clone https://github.com/forcepulsar/sf-observability.git
 cd sf-observability
 cp .env.example .env
+cp .env.salesforce.example .env.salesforce
 ```
 
 ---
@@ -107,17 +108,21 @@ curl -s -X POST "https://yourorg.my.salesforce.com/services/oauth2/token" \
 
 ---
 
-## Step 5 — Fill in .env (3 min)
+## Step 5 — Fill in .env.salesforce and .env (3 min)
 
-Open `.env` in a text editor and fill in these sections:
+Salesforce credentials go in `.env.salesforce`. Only the ingest container loads it — `.env` is shared with Grafana, rag_api and LibreChat, which don't need them.
 
 ```bash
-# Salesforce
+# .env.salesforce
 SF_CLIENT_ID=<Consumer Key from step 4>
 SF_CLIENT_SECRET=<Consumer Secret from step 4>
 SF_INSTANCE_URL=https://yourorg.my.salesforce.com
 SF_ORG_ALIAS=MyOrg
+```
 
+Then open `.env` and fill in these sections:
+
+```bash
 # ClickHouse — Block 1 (ingest)
 CH_HOST=https://abc123.us-east-1.aws.clickhouse.cloud
 CH_PORT=8443
