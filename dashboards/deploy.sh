@@ -8,11 +8,21 @@
 
 set -e
 
-GRAFANA_URL="${GRAFANA_URL:-http://localhost:3000}"
-GRAFANA_USER="${GRAFANA_USER:-admin}"
-GRAFANA_PASS="${GRAFANA_PASS:-admin}"
-
 DIR="$(cd "$(dirname "$0")" && pwd)"
+ENV_FILE="$DIR/../.env"
+
+# Read one KEY=value from the repo .env (without sourcing it); strips surrounding quotes.
+env_val() {
+  [ -f "$ENV_FILE" ] || return 0
+  grep -E "^$1=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/' || true
+}
+
+# Defaults follow the repo .env, so this works on prod (GRAFANA_PORT=8000) and locally (3000).
+GRAFANA_PORT="${GRAFANA_PORT:-$(env_val GRAFANA_PORT)}"
+GRAFANA_URL="${GRAFANA_URL:-http://localhost:${GRAFANA_PORT:-3000}}"
+GRAFANA_USER="${GRAFANA_USER:-admin}"
+GRAFANA_PASS="${GRAFANA_PASS:-$(env_val GRAFANA_ADMIN_PASSWORD)}"
+GRAFANA_PASS="${GRAFANA_PASS:-admin}"
 
 deploy_one() {
   local file="$1"
